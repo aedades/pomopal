@@ -164,19 +164,6 @@ export function useGuestData() {
     })
   }, [setTasks])
 
-  // Bulk set functions for syncing from Firestore on sign-out
-  const setAllTasks = useCallback((newTasks: GuestTask[]) => {
-    setTasks(newTasks)
-  }, [setTasks])
-
-  const setAllProjects = useCallback((newProjects: GuestProject[]) => {
-    setProjects(newProjects)
-  }, [setProjects])
-
-  const setAllPomodoros = useCallback((newPomodoros: GuestPomodoro[]) => {
-    setPomodoros(newPomodoros)
-  }, [setPomodoros])
-
   return {
     tasks,
     projects,
@@ -190,10 +177,6 @@ export function useGuestData() {
     deleteProject,
     recordPomodoro,
     reorderTasks,
-    // Bulk setters for sync
-    setAllTasks,
-    setAllProjects,
-    setAllPomodoros,
   }
 }
 

@@ -370,38 +370,9 @@ describe('TaskContext', () => {
   });
 });
 
-describe('TaskContext migration state', () => {
+describe('TaskContext localStorage persistence', () => {
   beforeEach(() => {
     localStorage.clear();
-  });
-
-  it('saves tasks to localStorage when saveToLocalStorage is called', async () => {
-    const { saveToLocalStorage } = await import('../hooks/useFirestoreData');
-    
-    const tasks = [
-      { id: 't1', title: 'Task 1', completed: false, estimatedPomodoros: 1, actualPomodoros: 0, createdAt: new Date().toISOString() },
-      { id: 't2', title: 'Task 2', completed: true, estimatedPomodoros: 2, actualPomodoros: 2, createdAt: new Date().toISOString() },
-    ];
-    
-    saveToLocalStorage({ tasks, projects: [], pomodoros: [] });
-    
-    const saved = JSON.parse(localStorage.getItem('pomodoro:guest:tasks') || '[]');
-    expect(saved).toHaveLength(2);
-    expect(saved[0].title).toBe('Task 1');
-    expect(saved[1].title).toBe('Task 2');
-  });
-
-  it('hasMigrated starts as false on each mount (session-only flag)', () => {
-    // hasMigrated is now a session-only flag, not persisted to localStorage
-    // This ensures merge runs on each sign-in, not just the first time ever
-    render(
-      <TestWrapper>
-        <TestComponent />
-      </TestWrapper>
-    );
-    
-    // Component should render successfully with no tasks
-    expect(screen.getByTestId('task-count')).toHaveTextContent('0');
   });
 
   it('preserves local tasks after component unmount/remount', () => {
