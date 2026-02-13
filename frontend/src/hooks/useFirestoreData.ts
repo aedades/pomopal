@@ -257,7 +257,78 @@ export function useFirestoreData(userId: string | null) {
 }
 
 /**
- * Migrate localStorage data to Firestore on first sign-in.
+ * Merge localStorage data into Firestore on sign-in.
+ * Only adds items that don't already exist in Firestore (by ID).
+ * This preserves cloud data while adding any local-only items.
+ */
+export async function mergeLocalToFirestore(
+  localData: {
+    tasks: GuestTask[]
+    projects: GuestProject[]
+    pomodoros: GuestPomodoro[]
+  },
+  existingData: {
+    tasks: GuestTask[]
+    projects: GuestProject[]
+    pomodoros: GuestPomodoro[]
+  },
+  userId: string
+): Promise<{ added: { tasks: number; projects: number; pomodoros: number } }> {
+  if (!db || !isFirebaseConfigured) {
+    console.error('Firebase not configured')
+    return { added: { tasks: 0, projects: 0, pomodoros: 0 } }
+  }
+
+  const firestore = db
+  
+  // Find items that exist locally but not in Firestore
+  const existingTaskIds = new Set(existingData.tasks.map(t => t.id))
+  const existingProjectIds = new Set(existingData.projects.map(p => p.id))
+  const existingPomodoroIds = new Set(existingData.pomodoros.map(p => p.id))
+  
+  const newTasks = localData.tasks.filter(t => !existingTaskIds.has(t.id))
+  const newProjects = localData.projects.filter(p => !existingProjectIds.has(p.id))
+  const newPomodoros = localData.pomodoros.filter(p => !existingPomodoroIds.has(p.id)).slice(0, 500)
+
+  console.log('Merging local data to Firestore for user:', userId)
+  console.log('New tasks to add:', newTasks.length, '(existing:', existingData.tasks.length, ')')
+  console.log('New projects to add:', newProjects.length, '(existing:', existingData.projects.length, ')')
+  console.log('New pomodoros to add:', newPomodoros.length, '(existing:', existingData.pomodoros.length, ')')
+
+  if (newTasks.length === 0 && newProjects.length === 0 && newPomodoros.length === 0) {
+    console.log('Nothing new to merge')
+    return { added: { tasks: 0, projects: 0, pomodoros: 0 } }
+  }
+
+  try {
+    const batch = writeBatch(firestore)
+
+    for (const task of newTasks) {
+      const ref = doc(firestore, 'users', userId, 'tasks', task.id)
+      batch.set(ref, task)
+    }
+
+    for (const project of newProjects) {
+      const ref = doc(firestore, 'users', userId, 'projects', project.id)
+      batch.set(ref, project)
+    }
+
+    for (const pomo of newPomodoros) {
+      const ref = doc(firestore, 'users', userId, 'pomodoros', pomo.id)
+      batch.set(ref, pomo)
+    }
+
+    await batch.commit()
+    console.log('Merge complete!')
+    return { added: { tasks: newTasks.length, projects: newProjects.length, pomodoros: newPomodoros.length } }
+  } catch (error) {
+    console.error('Merge failed:', error)
+    return { added: { tasks: 0, projects: 0, pomodoros: 0 } }
+  }
+}
+
+/**
+ * @deprecated Use mergeLocalToFirestore instead
  */
 export async function migrateLocalToFirestore(
   localData: {
@@ -267,47 +338,9 @@ export async function migrateLocalToFirestore(
   },
   userId: string
 ): Promise<boolean> {
-  if (!db || !isFirebaseConfigured) {
-    console.error('Firebase not configured')
-    return false
-  }
-
-  // Store reference after null check for TypeScript
-  const firestore = db
-
-  console.log('Migrating local data to Firestore for user:', userId)
-  console.log('Tasks:', localData.tasks.length)
-  console.log('Projects:', localData.projects.length)
-  console.log('Pomodoros:', localData.pomodoros.length)
-
-  try {
-    const batch = writeBatch(firestore)
-
-    // Migrate tasks
-    for (const task of localData.tasks) {
-      const ref = doc(firestore, 'users', userId, 'tasks', task.id)
-      batch.set(ref, task)
-    }
-
-    // Migrate projects
-    for (const project of localData.projects) {
-      const ref = doc(firestore, 'users', userId, 'projects', project.id)
-      batch.set(ref, project)
-    }
-
-    // Migrate pomodoros (limit to last 500 to avoid batch limits)
-    for (const pomo of localData.pomodoros.slice(0, 500)) {
-      const ref = doc(firestore, 'users', userId, 'pomodoros', pomo.id)
-      batch.set(ref, pomo)
-    }
-
-    await batch.commit()
-    console.log('Migration complete!')
-    return true
-  } catch (error) {
-    console.error('Migration failed:', error)
-    return false
-  }
+  // For backward compatibility, treat as merge with empty existing data
+  const result = await mergeLocalToFirestore(localData, { tasks: [], projects: [], pomodoros: [] }, userId)
+  return result.added.tasks > 0 || result.added.projects > 0 || result.added.pomodoros > 0
 }
 
 /**
