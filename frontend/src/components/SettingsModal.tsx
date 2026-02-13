@@ -89,7 +89,6 @@ export default function SettingsModal({ settings, onUpdate, onClose }: SettingsM
           <section>
             <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase mb-3">
               Timer
-              <HelpTip text="Classic: 25/5/15 min. Adjust to your style." />
             </h3>
             <div className="grid grid-cols-3 gap-3">
               <div>
@@ -141,7 +140,6 @@ export default function SettingsModal({ settings, onUpdate, onClose }: SettingsM
                 label="Daily pomodoro goal"
                 checked={settings.daily_goal_enabled}
                 onChange={(v) => onUpdate({ daily_goal_enabled: v })}
-                help="Set a target number of pomodoros to complete each day. Your progress is shown at the top of the timer view."
               />
               {settings.daily_goal_enabled && (
                 <div className="flex items-center justify-between pl-4">
@@ -168,37 +166,32 @@ export default function SettingsModal({ settings, onUpdate, onClose }: SettingsM
                 label="Auto-start breaks"
                 checked={settings.auto_start_breaks}
                 onChange={(v) => onUpdate({ auto_start_breaks: v })}
-                help="Automatically start break timer when a work session ends."
               />
               <Toggle
                 label="Sound notifications"
                 checked={settings.sound_enabled}
                 onChange={(v) => onUpdate({ sound_enabled: v })}
-                help="Play a sound when the timer completes."
               />
               <Toggle
                 label="Browser notifications"
                 checked={settings.notifications_enabled}
                 onChange={(v) => onUpdate({ notifications_enabled: v })}
-                help="Show a desktop notification when the timer completes (even if the tab is in the background)."
+                help="Works even when tab is in background."
               />
               <Toggle
                 label="Dark mode"
                 checked={settings.dark_mode}
                 onChange={(v) => onUpdate({ dark_mode: v })}
-                help="Switch to a darker color scheme that's easier on the eyes."
               />
               <Toggle
                 label="Move completed tasks to bottom"
                 checked={settings.move_completed_to_bottom}
                 onChange={(v) => onUpdate({ move_completed_to_bottom: v })}
-                help="Automatically sort completed tasks to the bottom of the list."
               />
               <Toggle
                 label="Show dated tasks first"
                 checked={settings.dated_tasks_first}
                 onChange={(v) => onUpdate({ dated_tasks_first: v })}
-                help="Tasks with due dates appear before tasks without due dates."
               />
             </div>
           </section>
@@ -213,7 +206,7 @@ export default function SettingsModal({ settings, onUpdate, onClose }: SettingsM
                 label="Enable flow mode"
                 checked={settings.flow_mode_enabled}
                 onChange={(v) => onUpdate({ flow_mode_enabled: v })}
-                help="For deep work sessions. Timer counts up instead of down, with no interruptions."
+                help="Timer counts up with no alerts. Stop anytime after target to complete."
               />
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Timer counts up from 0. No alerts — work uninterrupted. 
@@ -227,7 +220,6 @@ export default function SettingsModal({ settings, onUpdate, onClose }: SettingsM
             <div className="flex items-center justify-between">
               <label className="text-gray-700 dark:text-gray-300">
                 Long break after
-                <HelpTip text="Long break after this many pomodoros." />
               </label>
               <div className="flex items-center gap-2">
                 <input
