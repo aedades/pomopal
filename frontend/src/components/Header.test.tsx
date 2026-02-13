@@ -18,17 +18,18 @@ vi.mock('../context/AuthContext', () => ({
 }))
 
 const defaultSettings: Settings = {
-  work_duration: 25,
-  short_break: 5,
-  long_break: 15,
+  work_duration_minutes: 25,
+  short_break_minutes: 5,
+  long_break_minutes: 15,
   long_break_interval: 4,
   auto_start_breaks: false,
-  auto_start_pomodoros: false,
   dark_mode: false,
-  notification_sound: true,
-  daily_goal: 8,
+  sound_enabled: true,
+  notifications_enabled: true,
+  daily_pomodoro_goal: 8,
   daily_goal_enabled: true,
-  completed_to_bottom: false,
+  flow_mode_enabled: false,
+  move_completed_to_bottom: false,
   dated_tasks_first: false,
 }
 
