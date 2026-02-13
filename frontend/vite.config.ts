@@ -3,8 +3,8 @@ import react from '@vitejs/plugin-react'
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
 
-// Read version from package.json
-const pkg = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8'))
+// Read version from root package.json (release-please updates this)
+const pkg = JSON.parse(readFileSync(resolve(__dirname, '..', 'package.json'), 'utf-8'))
 
 // Use VITE_BASE_PATH env var, default to '/' for local dev
 const basePath = process.env.VITE_BASE_PATH || '/'
