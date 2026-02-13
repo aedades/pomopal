@@ -91,6 +91,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       if (data.tasks.length > 0 || data.projects.length > 0) {
         saveToLocalStorage(data)
       }
+      // Reset migration flag so merge can run on next sign-in
+      setHasMigrated(false)
     }
   }, [user])
 
