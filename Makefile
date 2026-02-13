@@ -1,4 +1,4 @@
-.PHONY: dev test build install clean serve pr-test
+.PHONY: dev dev-seed test build install clean serve pr-test seed
 
 # Install dependencies
 install:
@@ -7,6 +7,12 @@ install:
 # Run dev server (accessible on LAN)
 dev:
 	cd frontend && npm run dev -- --host 0.0.0.0
+
+# Run dev server and open seed page
+dev-seed:
+	@echo "Starting dev server..."
+	@echo "Open http://localhost:5173/seed.html to seed test data"
+	cd frontend && npm run dev -- --host 0.0.0.0 --open /seed.html
 
 # Run tests
 test:
