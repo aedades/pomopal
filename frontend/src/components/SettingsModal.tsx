@@ -153,6 +153,11 @@ export default function SettingsModal({ settings, onUpdate, onClose }: SettingsM
                   />
                 </div>
               )}
+              <Toggle
+                label="Exclude weekends from streak"
+                checked={settings.exclude_weekends_from_streak}
+                onChange={(v) => onUpdate({ exclude_weekends_from_streak: v })}
+              />
             </div>
           </section>
 

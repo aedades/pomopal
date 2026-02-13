@@ -17,6 +17,7 @@ describe('SettingsModal', () => {
     flow_mode_enabled: false,
     move_completed_to_bottom: true,
     dated_tasks_first: true,
+  exclude_weekends_from_streak: false,
   };
 
   const mockOnUpdate = vi.fn();
@@ -77,8 +78,8 @@ describe('SettingsModal', () => {
       btn.className.includes('w-12') && btn.className.includes('h-6')
     );
     // Flow mode is after the behavior toggles:
-    // 0: daily_goal, 1: auto-start, 2: sound, 3: notifications, 4: dark, 5: completed, 6: dated, 7: flow
-    const flowModeToggle = toggleButtons[7];
+    // 0: daily_goal, 1: exclude_weekends, 2: auto-start, 3: sound, 4: notifications, 5: dark, 6: completed, 7: dated, 8: flow
+    const flowModeToggle = toggleButtons[8];
     fireEvent.click(flowModeToggle);
     expect(mockOnUpdate).toHaveBeenCalledWith({ flow_mode_enabled: true });
   });

@@ -12,13 +12,14 @@ import DailyProgress from './components/DailyProgress'
 import Stats from './components/Stats'
 import { IOSInstructions, IOSInstallBanner } from './components/IOSInstructions'
 import { TaskProvider, useTaskContext } from './context/TaskContext'
-import { AuthProvider } from './context/AuthContext'
+import { AuthProvider, useAuth } from './context/AuthContext'
 import { VERSION } from './version'
 
 type View = 'timer' | 'stats'
 
 function AppContent() {
-  const { settings, updateSettings } = useSettings()
+  const { user } = useAuth()
+  const { settings, updateSettings } = useSettings(user?.id)
   const { activeTask, todayPomodoros, recordPomodoro, pomodoros, rawTasks, rawProjects, isCloudSync } = useTaskContext()
   const { permission, requestPermission } = useNotifications()
   const { scheduleNotification, cancelNotification } = useTimerNotifications()
@@ -28,7 +29,9 @@ function AppContent() {
   const appliedRemoteRef = useRef(false)
   const lastSyncedStateRef = useRef<string>('')
   const [view, setView] = useState<View>('timer')
-  const stats = useStats(pomodoros, rawTasks, rawProjects)
+  const stats = useStats(pomodoros, rawTasks, rawProjects, {
+    excludeWeekendsFromStreak: settings.exclude_weekends_from_streak,
+  })
   
   // Show iOS instructions on first visit for iOS users
   useEffect(() => {

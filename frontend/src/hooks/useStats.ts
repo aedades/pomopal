@@ -66,14 +66,44 @@ function getDaysBetween(date1: string, date2: string): number {
   return Math.floor(diffTime / (1000 * 60 * 60 * 24))
 }
 
+interface StatsOptions {
+  excludeWeekendsFromStreak?: boolean
+}
+
 export function useStats(
   pomodoros: GuestPomodoro[],
   tasks: GuestTask[],
-  projects: GuestProject[]
+  projects: GuestProject[],
+  options: StatsOptions = {}
 ): Stats {
+  const { excludeWeekendsFromStreak = false } = options
+  
   return useMemo(() => {
     const now = new Date()
     const todayStr = getDateString(now)
+    
+    // Helper to check if a date is a weekend
+    const isWeekend = (dateStr: string): boolean => {
+      const d = new Date(dateStr)
+      const day = d.getDay()
+      return day === 0 || day === 6 // Sunday = 0, Saturday = 6
+    }
+    
+    // Get previous working day (skips weekends if excluding)
+    const getPrevDay = (dateStr: string): string => {
+      const d = new Date(dateStr)
+      d.setDate(d.getDate() - 1)
+      let result = getDateString(d)
+      
+      if (excludeWeekendsFromStreak) {
+        // Skip weekends
+        while (isWeekend(result)) {
+          d.setDate(d.getDate() - 1)
+          result = getDateString(d)
+        }
+      }
+      return result
+    }
     
     // Group pomodoros by date
     const byDate = new Map<string, { completed: number; interrupted: number; minutes: number }>()
@@ -113,22 +143,24 @@ export function useStats(
       .filter(d => byDate.get(d)!.completed > 0)
       .sort((a, b) => b.localeCompare(a))
     
-    // Check if today or yesterday has activity for current streak
+    // Check if today or yesterday (or last weekday if excluding weekends) has activity
     if (sortedDates.length > 0) {
-      const yesterday = new Date(now)
-      yesterday.setDate(yesterday.getDate() - 1)
-      const yesterdayStr = getDateString(yesterday)
+      const lastExpectedDay = getPrevDay(getDateString(new Date(now.getTime() + 86400000))) // Tomorrow - 1 working day = today or last weekday
+      const prevExpectedDay = getPrevDay(lastExpectedDay)
       
-      if (sortedDates[0] === todayStr || sortedDates[0] === yesterdayStr) {
+      // Allow streak if most recent activity is today or the previous expected day
+      if (sortedDates[0] === todayStr || sortedDates[0] === lastExpectedDay || sortedDates[0] === prevExpectedDay) {
         // Start counting streak
         let expectedDate = sortedDates[0]
         for (const date of sortedDates) {
+          // Skip weekend dates from our data if excluding weekends
+          if (excludeWeekendsFromStreak && isWeekend(date)) {
+            continue
+          }
+          
           if (date === expectedDate) {
             currentStreak++
-            // Move to previous day
-            const d = new Date(expectedDate)
-            d.setDate(d.getDate() - 1)
-            expectedDate = getDateString(d)
+            expectedDate = getPrevDay(expectedDate)
           } else if (getDaysBetween(date, expectedDate) <= 1) {
             // Allow for missing a day check (in case of timezone issues)
             continue
@@ -140,15 +172,32 @@ export function useStats(
     }
     
     // Calculate longest streak
-    const sortedDatesAsc = [...sortedDates].sort()
+    const sortedDatesAsc = [...sortedDates]
+      .filter(d => !excludeWeekendsFromStreak || !isWeekend(d))
+      .sort()
     let prevDate = ''
     for (const date of sortedDatesAsc) {
       if (!prevDate) {
         tempStreak = 1
-      } else if (getDaysBetween(prevDate, date) === 1) {
-        tempStreak++
       } else {
-        tempStreak = 1
+        // Check if dates are consecutive (accounting for weekend skipping)
+        const expectedNext = new Date(prevDate)
+        expectedNext.setDate(expectedNext.getDate() + 1)
+        let expectedDateStr = getDateString(expectedNext)
+        
+        if (excludeWeekendsFromStreak) {
+          // Skip weekends
+          while (isWeekend(expectedDateStr)) {
+            expectedNext.setDate(expectedNext.getDate() + 1)
+            expectedDateStr = getDateString(expectedNext)
+          }
+        }
+        
+        if (date === expectedDateStr) {
+          tempStreak++
+        } else {
+          tempStreak = 1
+        }
       }
       longestStreak = Math.max(longestStreak, tempStreak)
       prevDate = date
@@ -284,7 +333,7 @@ export function useStats(
       estimateAccuracy,
       insights,
     }
-  }, [pomodoros, tasks, projects])
+  }, [pomodoros, tasks, projects, excludeWeekendsFromStreak])
 }
 
 // Format minutes as hours and minutes

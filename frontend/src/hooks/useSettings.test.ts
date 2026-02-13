@@ -21,6 +21,7 @@ describe('useSettings', () => {
     long_break_interval: 4,
     move_completed_to_bottom: true,
     dated_tasks_first: true,
+  exclude_weekends_from_streak: false,
   };
 
   it('returns default settings when localStorage is empty', () => {

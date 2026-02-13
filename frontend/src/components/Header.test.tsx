@@ -31,6 +31,7 @@ const defaultSettings: Settings = {
   flow_mode_enabled: false,
   move_completed_to_bottom: false,
   dated_tasks_first: false,
+  exclude_weekends_from_streak: false,
 }
 
 describe('Header', () => {

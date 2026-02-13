@@ -17,6 +17,7 @@ describe('Timer', () => {
     flow_mode_enabled: false,
     move_completed_to_bottom: true,
     dated_tasks_first: true,
+  exclude_weekends_from_streak: false,
   };
 
   const defaultProps = {
