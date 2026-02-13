@@ -1,6 +1,6 @@
-import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react'
 import { useGuestData, GuestTask, GuestProject, GuestPomodoro } from '../hooks/useLocalStorage'
-import { useFirestoreData, migrateLocalToFirestore, clearLocalData } from '../hooks/useFirestoreData'
+import { useFirestoreData, migrateLocalToFirestore, clearLocalData, saveToLocalStorage } from '../hooks/useFirestoreData'
 import { useAuth } from './AuthContext'
 import { isFirebaseConfigured } from '../lib/firebase'
 
@@ -64,6 +64,35 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const isCloudSync = !!user
   const dataSource = isCloudSync ? firestoreData : guestData
   const isLoading = isCloudSync ? firestoreData.isLoading : false
+
+  // Track previous user for sign-out detection
+  const prevUserRef = useRef<string | null>(null)
+  const firestoreDataRef = useRef({ tasks: firestoreData.tasks, projects: firestoreData.projects, pomodoros: firestoreData.pomodoros })
+  
+  // Keep Firestore data ref updated
+  useEffect(() => {
+    if (user) {
+      firestoreDataRef.current = {
+        tasks: firestoreData.tasks,
+        projects: firestoreData.projects,
+        pomodoros: firestoreData.pomodoros,
+      }
+    }
+  }, [user, firestoreData.tasks, firestoreData.projects, firestoreData.pomodoros])
+
+  // Save Firestore data to localStorage on sign-out
+  useEffect(() => {
+    const prevUser = prevUserRef.current
+    prevUserRef.current = user?.id ?? null
+    
+    // Detect sign-out: previous user existed, current user is null
+    if (prevUser && !user) {
+      const data = firestoreDataRef.current
+      if (data.tasks.length > 0 || data.projects.length > 0) {
+        saveToLocalStorage(data)
+      }
+    }
+  }, [user])
 
   // Migrate local data to Firestore on first sign-in
   useEffect(() => {

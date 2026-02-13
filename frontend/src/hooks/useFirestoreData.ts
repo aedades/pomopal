@@ -319,3 +319,27 @@ export function clearLocalData(): void {
   localStorage.removeItem('pomodoro-stats')
   console.log('Local data cleared after migration')
 }
+
+/**
+ * Save Firestore data to localStorage on sign-out.
+ * This preserves user data locally so they can continue without signing in.
+ */
+export function saveToLocalStorage(data: {
+  tasks: GuestTask[]
+  projects: GuestProject[]
+  pomodoros: GuestPomodoro[]
+}): void {
+  console.log('Saving Firestore data to localStorage on sign-out')
+  console.log('Tasks:', data.tasks.length)
+  console.log('Projects:', data.projects.length)
+  console.log('Pomodoros:', data.pomodoros.length)
+  
+  localStorage.setItem('pomodoro-tasks', JSON.stringify(data.tasks))
+  localStorage.setItem('pomodoro-projects', JSON.stringify(data.projects))
+  localStorage.setItem('pomodoro-stats', JSON.stringify(data.pomodoros))
+  
+  // Reset migration flag so data can be re-migrated on next sign-in
+  localStorage.removeItem('pomodoro:migrated')
+  
+  console.log('Data saved to localStorage')
+}
