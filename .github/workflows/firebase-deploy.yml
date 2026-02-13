@@ -1,9 +1,10 @@
-name: Deploy to Firebase Hosting
+name: Deploy Preview
 
 on:
   push:
     branches: [main]
-  workflow_dispatch:
+  pull_request:
+    branches: [main]
 
 jobs:
   build-and-deploy:
@@ -30,9 +31,19 @@ jobs:
         working-directory: frontend
         run: npm run build
 
-      - name: Deploy to Firebase Hosting
+      - name: Deploy Preview (PRs)
+        if: github.event_name == 'pull_request'
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          channelId: live
+          projectId: pomopal
+
+      - name: Deploy to Staging (main)
+        if: github.ref == 'refs/heads/main'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          channelId: staging
+          projectId: pomopal
