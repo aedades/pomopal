@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.1](https://github.com/aedades/pomopal/compare/v1.1.0...v1.1.1) (2026-02-13)
+
+
+### Bug Fixes
+
+* read version from root package.json where release-please updates it ([#18](https://github.com/aedades/pomopal/issues/18)) ([59c344a](https://github.com/aedades/pomopal/commit/59c344aac7e0a51ed3a7e0a89d1931694a84cdfe))
+
 ## [1.1.0](https://github.com/aedades/pomopal/compare/v1.0.1...v1.1.0) (2026-02-13)
 
 
