@@ -1,4 +1,11 @@
-import { createContext, useContext, useState, ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { 
+  onAuthStateChanged, 
+  signInWithPopup, 
+  signOut as firebaseSignOut,
+  User as FirebaseUser
+} from 'firebase/auth'
+import { auth, googleProvider, isFirebaseConfigured } from '../lib/firebase'
 
 interface User {
   id: string
@@ -10,36 +17,75 @@ interface User {
 interface AuthContextType {
   user: User | null
   isLoading: boolean
+  isFirebaseConfigured: boolean
   signInWithGoogle: () => Promise<void>
   signOut: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
 
+function mapFirebaseUser(firebaseUser: FirebaseUser): User {
+  return {
+    id: firebaseUser.uid,
+    email: firebaseUser.email || '',
+    displayName: firebaseUser.displayName,
+    photoURL: firebaseUser.photoURL,
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
-  const [isLoading] = useState(false)  // Will be used when Firebase Auth is implemented
+  const [isLoading, setIsLoading] = useState(isFirebaseConfigured)
+
+  // Listen to auth state changes
+  useEffect(() => {
+    if (!auth || !isFirebaseConfigured) {
+      setIsLoading(false)
+      return
+    }
+
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        setUser(mapFirebaseUser(firebaseUser))
+      } else {
+        setUser(null)
+      }
+      setIsLoading(false)
+    })
+
+    return () => unsubscribe()
+  }, [])
 
   const signInWithGoogle = async () => {
-    // TODO: Implement with Firebase Auth
-    // import { getAuth, signInWithPopup, GoogleAuthProvider } from 'firebase/auth'
-    // const auth = getAuth()
-    // const provider = new GoogleAuthProvider()
-    // const result = await signInWithPopup(auth, provider)
-    // setUser({ id: result.user.uid, email: result.user.email, ... })
-    
-    alert('Google Sign-In coming soon! 🚧\n\nThis will enable:\n• Sync across devices\n• Cloud backup\n• Access from anywhere')
+    if (!auth || !googleProvider) {
+      console.warn('Firebase not configured - running in guest mode')
+      alert('Sign-in requires Firebase configuration.\n\nAdd your Firebase config to .env to enable cloud sync.')
+      return
+    }
+
+    try {
+      await signInWithPopup(auth, googleProvider)
+      // User state will be updated by onAuthStateChanged listener
+    } catch (error) {
+      console.error('Google sign-in error:', error)
+      throw error
+    }
   }
 
   const signOut = async () => {
-    // TODO: Implement with Firebase Auth
-    // const auth = getAuth()
-    // await auth.signOut()
-    setUser(null)
+    if (!auth) return
+    
+    try {
+      await firebaseSignOut(auth)
+      // User state will be updated by onAuthStateChanged listener
+    } catch (error) {
+      console.error('Sign-out error:', error)
+      throw error
+    }
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, signInWithGoogle, signOut }}>
+    <AuthContext.Provider value={{ user, isLoading, isFirebaseConfigured, signInWithGoogle, signOut }}>
       {children}
     </AuthContext.Provider>
   )

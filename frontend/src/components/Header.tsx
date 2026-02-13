@@ -1,8 +1,64 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import type { Settings } from '../hooks/useSettings'
 import SettingsModal from './SettingsModal'
 import HelpModal from './HelpModal'
 import { useAuth } from '../context/AuthContext'
+
+// User dropdown menu component
+function UserMenu({ user, onSignOut }: { user: { displayName: string | null; photoURL: string | null; email: string }; onSignOut: () => void }) {
+  const [isOpen, setIsOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 hover:bg-white/30 transition-colors text-white text-sm"
+      >
+        {user.photoURL ? (
+          <img src={user.photoURL} alt="" className="w-5 h-5 rounded-full" />
+        ) : (
+          <span>👤</span>
+        )}
+        <span className="hidden sm:inline">{user.displayName || 'User'}</span>
+        <span className="text-xs">▼</span>
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-1 z-50">
+          <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
+            <p className="text-sm font-medium text-gray-800 dark:text-white truncate">
+              {user.displayName || 'User'}
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+              {user.email}
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              setIsOpen(false)
+              onSignOut()
+            }}
+            className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            Sign out
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
 
 interface HeaderProps {
   settings: Settings
@@ -24,18 +80,7 @@ export default function Header({ settings, onUpdateSettings }: HeaderProps) {
       <div className="flex items-center gap-3">
         {/* Sign in / User menu */}
         {user ? (
-          <button
-            onClick={signOut}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 hover:bg-white/30 transition-colors text-white text-sm"
-            title="Sign out"
-          >
-            {user.photoURL ? (
-              <img src={user.photoURL} alt="" className="w-5 h-5 rounded-full" />
-            ) : (
-              <span>👤</span>
-            )}
-            <span className="hidden sm:inline">{user.displayName || 'User'}</span>
-          </button>
+          <UserMenu user={user} onSignOut={signOut} />
         ) : (
           <button
             onClick={signInWithGoogle}

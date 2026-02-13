@@ -17,7 +17,7 @@ type View = 'timer' | 'stats'
 
 function AppContent() {
   const { settings, updateSettings } = useSettings()
-  const { activeTask, todayPomodoros, recordPomodoro, pomodoros, guestTasks, guestProjects } = useTaskContext()
+  const { activeTask, todayPomodoros, recordPomodoro, pomodoros, guestTasks, guestProjects, isCloudSync } = useTaskContext()
   const { permission, requestPermission } = useNotifications()
   const [showIOSInstructions, setShowIOSInstructions] = useState(false)
   const [view, setView] = useState<View>('timer')
@@ -188,7 +188,7 @@ function AppContent() {
             <span><kbd className="px-1.5 py-0.5 bg-white/20 rounded">N</kbd> new task</span>
           </p>
           <p className="text-white/50">
-            📦 Data saved locally in your browser
+            {isCloudSync ? '☁️ Synced to cloud' : '📦 Data saved locally in your browser'}
           </p>
           <a
             href="https://buymeacoffee.com/aedades"

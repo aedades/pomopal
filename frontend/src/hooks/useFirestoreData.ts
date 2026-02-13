@@ -1,27 +1,21 @@
 import { useState, useEffect, useCallback } from 'react'
+import { 
+  collection, 
+  doc, 
+  setDoc, 
+  deleteDoc, 
+  onSnapshot,
+  query,
+  where,
+  writeBatch,
+  orderBy
+} from 'firebase/firestore'
+import { db, isFirebaseConfigured } from '../lib/firebase'
 import type { GuestTask, GuestProject, GuestPomodoro } from './useLocalStorage'
 
-// TODO: Uncomment when Firebase is configured
-// import { 
-//   collection, 
-//   doc, 
-//   setDoc, 
-//   deleteDoc, 
-//   onSnapshot,
-//   query,
-//   where,
-//   Timestamp 
-// } from 'firebase/firestore'
-// import { db } from '../lib/firebase'
-
 /**
- * Firestore data hook - mirrors useGuestData interface for seamless switching.
- * 
- * When Firebase is configured:
- * 1. Uncomment the Firebase imports above
- * 2. Uncomment the implementation below
- * 3. Data syncs in real-time across devices
- * 4. Offline persistence handled by Firestore SDK
+ * Firestore data hook - syncs data in real-time across devices.
+ * Data structure: /users/{userId}/tasks, /users/{userId}/projects, /users/{userId}/pomodoros
  */
 export function useFirestoreData(userId: string | null) {
   const [tasks, setTasks] = useState<GuestTask[]>([])
@@ -30,64 +24,74 @@ export function useFirestoreData(userId: string | null) {
   const [todayPomodoros, setTodayPomodoros] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
 
-  // ============================================================
-  // TODO: Real-time listeners (uncomment when Firebase ready)
-  // ============================================================
-  
-  // useEffect(() => {
-  //   if (!userId) {
-  //     setIsLoading(false)
-  //     return
-  //   }
-  //
-  //   // Subscribe to tasks
-  //   const tasksQuery = query(collection(db, 'users', userId, 'tasks'))
-  //   const unsubTasks = onSnapshot(tasksQuery, (snapshot) => {
-  //     const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as GuestTask[]
-  //     setTasks(data)
-  //   })
-  //
-  //   // Subscribe to projects
-  //   const projectsQuery = query(collection(db, 'users', userId, 'projects'))
-  //   const unsubProjects = onSnapshot(projectsQuery, (snapshot) => {
-  //     const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as GuestProject[]
-  //     setProjects(data)
-  //   })
-  //
-  //   // Subscribe to today's pomodoros
-  //   const today = new Date().toISOString().split('T')[0]
-  //   const pomodorosQuery = query(
-  //     collection(db, 'users', userId, 'pomodoros'),
-  //     where('completedAt', '>=', today)
-  //   )
-  //   const unsubPomodoros = onSnapshot(pomodorosQuery, (snapshot) => {
-  //     const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as GuestPomodoro[]
-  //     setPomodoros(data)
-  //     setTodayPomodoros(data.filter(p => !p.interrupted).length)
-  //   })
-  //
-  //   setIsLoading(false)
-  //
-  //   return () => {
-  //     unsubTasks()
-  //     unsubProjects()
-  //     unsubPomodoros()
-  //   }
-  // }, [userId])
-
-  // Stub: just mark as not loading
+  // Real-time listeners
   useEffect(() => {
-    setIsLoading(false)
-  }, [userId])
+    if (!userId || !db || !isFirebaseConfigured) {
+      setIsLoading(false)
+      return
+    }
 
-  // ============================================================
-  // CRUD Operations (stubbed - uncomment when Firebase ready)
-  // ============================================================
+    setIsLoading(true)
+
+    // Subscribe to tasks
+    const tasksRef = collection(db, 'users', userId, 'tasks')
+    const unsubTasks = onSnapshot(tasksRef, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ 
+        id: doc.id, 
+        ...doc.data() 
+      })) as GuestTask[]
+      setTasks(data)
+    }, (error) => {
+      console.error('Tasks listener error:', error)
+    })
+
+    // Subscribe to projects
+    const projectsRef = collection(db, 'users', userId, 'projects')
+    const unsubProjects = onSnapshot(projectsRef, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ 
+        id: doc.id, 
+        ...doc.data() 
+      })) as GuestProject[]
+      setProjects(data)
+    }, (error) => {
+      console.error('Projects listener error:', error)
+    })
+
+    // Subscribe to today's pomodoros
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const todayISO = today.toISOString()
+    
+    const pomodorosRef = collection(db, 'users', userId, 'pomodoros')
+    const pomodorosQuery = query(
+      pomodorosRef,
+      where('completedAt', '>=', todayISO),
+      orderBy('completedAt', 'desc')
+    )
+    const unsubPomodoros = onSnapshot(pomodorosQuery, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ 
+        id: doc.id, 
+        ...doc.data() 
+      })) as GuestPomodoro[]
+      setPomodoros(data)
+      setTodayPomodoros(data.filter(p => !p.interrupted).length)
+      setIsLoading(false)
+    }, (error) => {
+      console.error('Pomodoros listener error:', error)
+      setIsLoading(false)
+    })
+
+    return () => {
+      unsubTasks()
+      unsubProjects()
+      unsubPomodoros()
+    }
+  }, [userId])
 
   const generateId = () => crypto.randomUUID()
 
-  const addTask = useCallback((title: string, projectId?: string, estimatedPomodoros = 1) => {
-    if (!userId) return null
+  const addTask = useCallback(async (title: string, projectId?: string, estimatedPomodoros = 1, dueDate?: string) => {
+    if (!userId || !db) return null
     
     const newTask: GuestTask = {
       id: generateId(),
@@ -97,38 +101,40 @@ export function useFirestoreData(userId: string | null) {
       estimatedPomodoros,
       actualPomodoros: 0,
       createdAt: new Date().toISOString(),
+      dueDate,
     }
 
-    // TODO: Uncomment when Firebase ready
-    // await setDoc(doc(db, 'users', userId, 'tasks', newTask.id), newTask)
-    
-    // Stub: update local state
-    setTasks(prev => [newTask, ...prev])
-    return newTask
+    try {
+      await setDoc(doc(db, 'users', userId, 'tasks', newTask.id), newTask)
+      return newTask
+    } catch (error) {
+      console.error('Error adding task:', error)
+      return null
+    }
   }, [userId])
 
-  const updateTask = useCallback((id: string, updates: Partial<GuestTask>) => {
-    if (!userId) return
+  const updateTask = useCallback(async (id: string, updates: Partial<GuestTask>) => {
+    if (!userId || !db) return
 
-    // TODO: Uncomment when Firebase ready
-    // await setDoc(doc(db, 'users', userId, 'tasks', id), updates, { merge: true })
-    
-    // Stub: update local state
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t))
+    try {
+      await setDoc(doc(db, 'users', userId, 'tasks', id), updates, { merge: true })
+    } catch (error) {
+      console.error('Error updating task:', error)
+    }
   }, [userId])
 
-  const deleteTask = useCallback((id: string) => {
-    if (!userId) return
+  const deleteTask = useCallback(async (id: string) => {
+    if (!userId || !db) return
 
-    // TODO: Uncomment when Firebase ready
-    // await deleteDoc(doc(db, 'users', userId, 'tasks', id))
-    
-    // Stub: update local state
-    setTasks(prev => prev.filter(t => t.id !== id))
+    try {
+      await deleteDoc(doc(db, 'users', userId, 'tasks', id))
+    } catch (error) {
+      console.error('Error deleting task:', error)
+    }
   }, [userId])
 
-  const addProject = useCallback((name: string, color = '#6366f1') => {
-    if (!userId) return null
+  const addProject = useCallback(async (name: string, color = '#6366f1') => {
+    if (!userId || !db) return null
 
     const newProject: GuestProject = {
       id: generateId(),
@@ -138,36 +144,37 @@ export function useFirestoreData(userId: string | null) {
       createdAt: new Date().toISOString(),
     }
 
-    // TODO: Uncomment when Firebase ready
-    // await setDoc(doc(db, 'users', userId, 'projects', newProject.id), newProject)
-    
-    // Stub: update local state
-    setProjects(prev => [newProject, ...prev])
-    return newProject
+    try {
+      await setDoc(doc(db, 'users', userId, 'projects', newProject.id), newProject)
+      return newProject
+    } catch (error) {
+      console.error('Error adding project:', error)
+      return null
+    }
   }, [userId])
 
-  const updateProject = useCallback((id: string, updates: Partial<GuestProject>) => {
-    if (!userId) return
+  const updateProject = useCallback(async (id: string, updates: Partial<GuestProject>) => {
+    if (!userId || !db) return
 
-    // TODO: Uncomment when Firebase ready
-    // await setDoc(doc(db, 'users', userId, 'projects', id), updates, { merge: true })
-    
-    // Stub: update local state
-    setProjects(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p))
+    try {
+      await setDoc(doc(db, 'users', userId, 'projects', id), updates, { merge: true })
+    } catch (error) {
+      console.error('Error updating project:', error)
+    }
   }, [userId])
 
-  const deleteProject = useCallback((id: string) => {
-    if (!userId) return
+  const deleteProject = useCallback(async (id: string) => {
+    if (!userId || !db) return
 
-    // TODO: Uncomment when Firebase ready
-    // await deleteDoc(doc(db, 'users', userId, 'projects', id))
-    
-    // Stub: update local state
-    setProjects(prev => prev.filter(p => p.id !== id))
+    try {
+      await deleteDoc(doc(db, 'users', userId, 'projects', id))
+    } catch (error) {
+      console.error('Error deleting project:', error)
+    }
   }, [userId])
 
-  const recordPomodoro = useCallback((taskId?: string, interrupted = false) => {
-    if (!userId) return
+  const recordPomodoro = useCallback(async (taskId?: string, interrupted = false) => {
+    if (!userId || !db) return
 
     const newPomodoro: GuestPomodoro = {
       id: generateId(),
@@ -178,43 +185,40 @@ export function useFirestoreData(userId: string | null) {
       interrupted,
     }
 
-    // TODO: Uncomment when Firebase ready
-    // await setDoc(doc(db, 'users', userId, 'pomodoros', newPomodoro.id), newPomodoro)
-    
-    // Stub: update local state
-    setPomodoros(prev => [newPomodoro, ...prev])
-    if (!interrupted) {
-      setTodayPomodoros(prev => prev + 1)
-      if (taskId) {
-        setTasks(prev => prev.map(t => 
-          t.id === taskId ? { ...t, actualPomodoros: t.actualPomodoros + 1 } : t
-        ))
-      }
-    }
-  }, [userId])
-
-  const reorderTasks = useCallback((taskIds: string[]) => {
-    if (!userId) return
-
-    // TODO: Uncomment when Firebase ready
-    // const batch = writeBatch(db)
-    // taskIds.forEach((id, index) => {
-    //   const ref = doc(db, 'users', userId, 'tasks', id)
-    //   batch.update(ref, { sortOrder: index })
-    // })
-    // await batch.commit()
-    
-    // Stub: update local state
-    setTasks(prev => {
-      const updated = [...prev]
-      taskIds.forEach((id, index) => {
-        const taskIndex = updated.findIndex(t => t.id === id)
-        if (taskIndex !== -1) {
-          updated[taskIndex] = { ...updated[taskIndex], sortOrder: index }
+    try {
+      await setDoc(doc(db, 'users', userId, 'pomodoros', newPomodoro.id), newPomodoro)
+      
+      // Also increment task's actualPomodoros
+      if (taskId && !interrupted) {
+        const task = tasks.find(t => t.id === taskId)
+        if (task) {
+          await setDoc(
+            doc(db, 'users', userId, 'tasks', taskId), 
+            { actualPomodoros: task.actualPomodoros + 1 }, 
+            { merge: true }
+          )
         }
+      }
+    } catch (error) {
+      console.error('Error recording pomodoro:', error)
+    }
+  }, [userId, tasks])
+
+  const reorderTasks = useCallback(async (taskIds: string[]) => {
+    if (!userId || !db) return
+    
+    const firestore = db // Store after null check for TypeScript
+
+    try {
+      const batch = writeBatch(firestore)
+      taskIds.forEach((id, index) => {
+        const ref = doc(firestore, 'users', userId, 'tasks', id)
+        batch.update(ref, { sortOrder: index })
       })
-      return updated
-    })
+      await batch.commit()
+    } catch (error) {
+      console.error('Error reordering tasks:', error)
+    }
   }, [userId])
 
   return {
@@ -244,47 +248,56 @@ export async function migrateLocalToFirestore(
     pomodoros: GuestPomodoro[]
   },
   userId: string
-): Promise<void> {
+): Promise<boolean> {
+  if (!db || !isFirebaseConfigured) {
+    console.error('Firebase not configured')
+    return false
+  }
+
+  // Store reference after null check for TypeScript
+  const firestore = db
+
   console.log('Migrating local data to Firestore for user:', userId)
   console.log('Tasks:', localData.tasks.length)
   console.log('Projects:', localData.projects.length)
   console.log('Pomodoros:', localData.pomodoros.length)
 
-  // TODO: Uncomment when Firebase ready
-  // const batch = writeBatch(db)
-  //
-  // // Migrate tasks
-  // for (const task of localData.tasks) {
-  //   const ref = doc(db, 'users', userId, 'tasks', task.id)
-  //   batch.set(ref, task)
-  // }
-  //
-  // // Migrate projects
-  // for (const project of localData.projects) {
-  //   const ref = doc(db, 'users', userId, 'projects', project.id)
-  //   batch.set(ref, project)
-  // }
-  //
-  // // Migrate pomodoros (maybe limit to last 30 days?)
-  // for (const pomo of localData.pomodoros.slice(0, 1000)) {
-  //   const ref = doc(db, 'users', userId, 'pomodoros', pomo.id)
-  //   batch.set(ref, pomo)
-  // }
-  //
-  // await batch.commit()
-  // console.log('Migration complete!')
+  try {
+    const batch = writeBatch(firestore)
 
-  // Stub: just log
-  alert(`Migration ready! ${localData.tasks.length} tasks, ${localData.projects.length} projects will sync when Firebase is configured.`)
+    // Migrate tasks
+    for (const task of localData.tasks) {
+      const ref = doc(firestore, 'users', userId, 'tasks', task.id)
+      batch.set(ref, task)
+    }
+
+    // Migrate projects
+    for (const project of localData.projects) {
+      const ref = doc(firestore, 'users', userId, 'projects', project.id)
+      batch.set(ref, project)
+    }
+
+    // Migrate pomodoros (limit to last 500 to avoid batch limits)
+    for (const pomo of localData.pomodoros.slice(0, 500)) {
+      const ref = doc(firestore, 'users', userId, 'pomodoros', pomo.id)
+      batch.set(ref, pomo)
+    }
+
+    await batch.commit()
+    console.log('Migration complete!')
+    return true
+  } catch (error) {
+    console.error('Migration failed:', error)
+    return false
+  }
 }
 
 /**
  * Clear local storage after successful migration.
  */
 export function clearLocalData(): void {
-  localStorage.removeItem('pomodoro:guest:tasks')
-  localStorage.removeItem('pomodoro:guest:projects')
-  localStorage.removeItem('pomodoro:guest:pomodoros')
-  localStorage.removeItem('pomodoro:guest:today')
+  localStorage.removeItem('pomodoro-tasks')
+  localStorage.removeItem('pomodoro-projects')
+  localStorage.removeItem('pomodoro-stats')
   console.log('Local data cleared after migration')
 }

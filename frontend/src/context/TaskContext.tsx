@@ -1,7 +1,8 @@
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react'
 import { useGuestData, GuestTask, GuestProject, GuestPomodoro } from '../hooks/useLocalStorage'
-import { useFirestoreData, migrateLocalToFirestore } from '../hooks/useFirestoreData'
+import { useFirestoreData, migrateLocalToFirestore, clearLocalData } from '../hooks/useFirestoreData'
 import { useAuth } from './AuthContext'
+import { isFirebaseConfigured } from '../lib/firebase'
 
 interface Task {
   id: string
@@ -66,7 +67,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   // Migrate local data to Firestore on first sign-in
   useEffect(() => {
-    if (user && !hasMigrated && guestData.tasks.length > 0) {
+    if (user && !hasMigrated && isFirebaseConfigured && guestData.tasks.length > 0) {
       // User just signed in and has local data to migrate
       migrateLocalToFirestore(
         {
@@ -75,12 +76,14 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           pomodoros: guestData.pomodoros,
         },
         user.id
-      ).then(() => {
-        // Mark as migrated so we don't do it again
-        localStorage.setItem('pomodoro:migrated', 'true')
-        setHasMigrated(true)
-        // TODO: Uncomment when Firebase is ready to clear local data
-        // clearLocalData()
+      ).then((success) => {
+        if (success) {
+          // Mark as migrated so we don't do it again
+          localStorage.setItem('pomodoro:migrated', 'true')
+          setHasMigrated(true)
+          // Clear local data after successful migration
+          clearLocalData()
+        }
       })
     }
   // Only trigger on user/migration state changes, not on data changes
