@@ -345,17 +345,19 @@ export async function migrateLocalToFirestore(
 
 /**
  * Clear local storage after successful migration.
+ * Uses same keys as useGuestData hook: 'pomodoro:guest:*'
  */
 export function clearLocalData(): void {
-  localStorage.removeItem('pomodoro-tasks')
-  localStorage.removeItem('pomodoro-projects')
-  localStorage.removeItem('pomodoro-stats')
+  localStorage.removeItem('pomodoro:guest:tasks')
+  localStorage.removeItem('pomodoro:guest:projects')
+  localStorage.removeItem('pomodoro:guest:pomodoros')
   console.log('Local data cleared after migration')
 }
 
 /**
  * Save Firestore data to localStorage on sign-out.
  * This preserves user data locally so they can continue without signing in.
+ * Uses same keys as useGuestData hook: 'pomodoro:guest:*'
  */
 export function saveToLocalStorage(data: {
   tasks: GuestTask[]
@@ -367,9 +369,10 @@ export function saveToLocalStorage(data: {
   console.log('Projects:', data.projects.length)
   console.log('Pomodoros:', data.pomodoros.length)
   
-  localStorage.setItem('pomodoro-tasks', JSON.stringify(data.tasks))
-  localStorage.setItem('pomodoro-projects', JSON.stringify(data.projects))
-  localStorage.setItem('pomodoro-stats', JSON.stringify(data.pomodoros))
+  // Use same keys as useGuestData hook
+  localStorage.setItem('pomodoro:guest:tasks', JSON.stringify(data.tasks))
+  localStorage.setItem('pomodoro:guest:projects', JSON.stringify(data.projects))
+  localStorage.setItem('pomodoro:guest:pomodoros', JSON.stringify(data.pomodoros))
   
   // Reset migration flag so data can be re-migrated on next sign-in
   localStorage.removeItem('pomodoro:migrated')
