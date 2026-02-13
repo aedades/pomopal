@@ -1,7 +1,7 @@
 {
-  "name": "Pomodoro Timer - Focus & Task Management",
-  "short_name": "Pomodoro",
-  "description": "Free Pomodoro timer with task management, project organization, and progress tracking. Works offline. No signup required.",
+  "name": "pomo pal",
+  "short_name": "pomo pal",
+  "description": "Free pomodoro timer with task management, project organization, and progress tracking. Works offline. No signup required.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
