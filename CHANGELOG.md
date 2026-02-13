@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.1](https://github.com/aedades/pomopal/compare/v1.0.0...v1.0.1) (2026-02-13)
+
+
+### Bug Fixes
+
+* add Firebase config for production builds ([a89c920](https://github.com/aedades/pomopal/commit/a89c920c08a21eb7105544c0a2af20afb3a2dc81))
+* add Firebase config for production builds ([870ccaa](https://github.com/aedades/pomopal/commit/870ccaa238f0ee2bf695ff694266a2067c197821))
+
 ## 1.0.0 (2026-02-13)
 
 

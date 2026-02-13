@@ -1,6 +1,6 @@
 {
   "name": "pomo-pal",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "A friendly pomodoro timer PWA with push notifications and multi-device sync"
 }
