@@ -91,7 +91,11 @@ export function useFirestoreData(userId: string | null) {
   const generateId = () => crypto.randomUUID()
 
   const addTask = useCallback(async (title: string, projectId?: string, estimatedPomodoros = 1, dueDate?: string) => {
-    if (!userId || !db) return null
+    console.log('[Firestore] addTask called:', { userId, hasDb: !!db, title })
+    if (!userId || !db) {
+      console.warn('[Firestore] addTask early return - userId:', userId, 'db:', !!db)
+      return null
+    }
     
     const newTask: GuestTask = {
       id: generateId(),
@@ -105,10 +109,12 @@ export function useFirestoreData(userId: string | null) {
     }
 
     try {
+      console.log('[Firestore] Writing task to:', `users/${userId}/tasks/${newTask.id}`)
       await setDoc(doc(db, 'users', userId, 'tasks', newTask.id), newTask)
+      console.log('[Firestore] Task written successfully:', newTask.id)
       return newTask
     } catch (error) {
-      console.error('Error adding task:', error)
+      console.error('[Firestore] Error adding task:', error)
       return null
     }
   }, [userId])
