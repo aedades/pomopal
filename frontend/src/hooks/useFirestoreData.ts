@@ -7,8 +7,8 @@ import {
   onSnapshot,
   query,
   where,
-  writeBatch,
-  orderBy
+  orderBy,
+  writeBatch
 } from 'firebase/firestore'
 import { db, isFirebaseConfigured } from '../lib/firebase'
 import type { GuestTask, GuestProject, GuestPomodoro } from './useLocalStorage'
@@ -98,13 +98,15 @@ export function useFirestoreData(userId: string | null) {
     }
     
     // Firestore doesn't accept undefined values, so only include defined fields
+    const now = new Date().toISOString()
     const newTask: GuestTask = {
       id: generateId(),
       title,
       completed: false,
       estimatedPomodoros,
       actualPomodoros: 0,
-      createdAt: new Date().toISOString(),
+      createdAt: now,
+      updatedAt: now,
     }
     // Only add optional fields if they're defined
     if (projectId !== undefined) newTask.projectId = projectId
@@ -125,8 +127,9 @@ export function useFirestoreData(userId: string | null) {
     if (!userId || !db) return
 
     // Filter out undefined values - Firestore doesn't accept them
+    // Always set updatedAt on any update
     const cleanUpdates = Object.fromEntries(
-      Object.entries(updates).filter(([_, v]) => v !== undefined)
+      Object.entries({ ...updates, updatedAt: new Date().toISOString() }).filter(([_, v]) => v !== undefined)
     )
 
     try {
@@ -149,12 +152,14 @@ export function useFirestoreData(userId: string | null) {
   const addProject = useCallback(async (name: string, color = '#6366f1') => {
     if (!userId || !db) return null
 
+    const now = new Date().toISOString()
     const newProject: GuestProject = {
       id: generateId(),
       name,
       color,
       completed: false,
-      createdAt: new Date().toISOString(),
+      createdAt: now,
+      updatedAt: now,
     }
 
     try {
@@ -170,8 +175,9 @@ export function useFirestoreData(userId: string | null) {
     if (!userId || !db) return
 
     // Filter out undefined values - Firestore doesn't accept them
+    // Always set updatedAt on any update
     const cleanUpdates = Object.fromEntries(
-      Object.entries(updates).filter(([_, v]) => v !== undefined)
+      Object.entries({ ...updates, updatedAt: new Date().toISOString() }).filter(([_, v]) => v !== undefined)
     )
 
     try {
@@ -256,123 +262,6 @@ export function useFirestoreData(userId: string | null) {
   }
 }
 
-/**
- * Merge localStorage data into Firestore on sign-in.
- * Only adds items that don't already exist in Firestore (by ID).
- * This preserves cloud data while adding any local-only items.
- */
-export async function mergeLocalToFirestore(
-  localData: {
-    tasks: GuestTask[]
-    projects: GuestProject[]
-    pomodoros: GuestPomodoro[]
-  },
-  existingData: {
-    tasks: GuestTask[]
-    projects: GuestProject[]
-    pomodoros: GuestPomodoro[]
-  },
-  userId: string
-): Promise<{ added: { tasks: number; projects: number; pomodoros: number } }> {
-  if (!db || !isFirebaseConfigured) {
-    console.error('Firebase not configured')
-    return { added: { tasks: 0, projects: 0, pomodoros: 0 } }
-  }
-
-  const firestore = db
-  
-  // Find items that exist locally but not in Firestore
-  const existingTaskIds = new Set(existingData.tasks.map(t => t.id))
-  const existingProjectIds = new Set(existingData.projects.map(p => p.id))
-  const existingPomodoroIds = new Set(existingData.pomodoros.map(p => p.id))
-  
-  const newTasks = localData.tasks.filter(t => !existingTaskIds.has(t.id))
-  const newProjects = localData.projects.filter(p => !existingProjectIds.has(p.id))
-  const newPomodoros = localData.pomodoros.filter(p => !existingPomodoroIds.has(p.id)).slice(0, 500)
-
-  console.log('Merging local data to Firestore for user:', userId)
-  console.log('New tasks to add:', newTasks.length, '(existing:', existingData.tasks.length, ')')
-  console.log('New projects to add:', newProjects.length, '(existing:', existingData.projects.length, ')')
-  console.log('New pomodoros to add:', newPomodoros.length, '(existing:', existingData.pomodoros.length, ')')
-
-  if (newTasks.length === 0 && newProjects.length === 0 && newPomodoros.length === 0) {
-    console.log('Nothing new to merge')
-    return { added: { tasks: 0, projects: 0, pomodoros: 0 } }
-  }
-
-  try {
-    const batch = writeBatch(firestore)
-
-    for (const task of newTasks) {
-      const ref = doc(firestore, 'users', userId, 'tasks', task.id)
-      batch.set(ref, task)
-    }
-
-    for (const project of newProjects) {
-      const ref = doc(firestore, 'users', userId, 'projects', project.id)
-      batch.set(ref, project)
-    }
-
-    for (const pomo of newPomodoros) {
-      const ref = doc(firestore, 'users', userId, 'pomodoros', pomo.id)
-      batch.set(ref, pomo)
-    }
-
-    await batch.commit()
-    console.log('Merge complete!')
-    return { added: { tasks: newTasks.length, projects: newProjects.length, pomodoros: newPomodoros.length } }
-  } catch (error) {
-    console.error('Merge failed:', error)
-    return { added: { tasks: 0, projects: 0, pomodoros: 0 } }
-  }
-}
-
-/**
- * @deprecated Use mergeLocalToFirestore instead
- */
-export async function migrateLocalToFirestore(
-  localData: {
-    tasks: GuestTask[]
-    projects: GuestProject[]
-    pomodoros: GuestPomodoro[]
-  },
-  userId: string
-): Promise<boolean> {
-  // For backward compatibility, treat as merge with empty existing data
-  const result = await mergeLocalToFirestore(localData, { tasks: [], projects: [], pomodoros: [] }, userId)
-  return result.added.tasks > 0 || result.added.projects > 0 || result.added.pomodoros > 0
-}
-
-/**
- * Clear local storage after successful migration.
- * Uses same keys as useGuestData hook: 'pomodoro:guest:*'
- */
-export function clearLocalData(): void {
-  localStorage.removeItem('pomodoro:guest:tasks')
-  localStorage.removeItem('pomodoro:guest:projects')
-  localStorage.removeItem('pomodoro:guest:pomodoros')
-  console.log('Local data cleared after migration')
-}
-
-/**
- * Save Firestore data to localStorage on sign-out.
- * This preserves user data locally so they can continue without signing in.
- * Uses same keys as useGuestData hook: 'pomodoro:guest:*'
- */
-export function saveToLocalStorage(data: {
-  tasks: GuestTask[]
-  projects: GuestProject[]
-  pomodoros: GuestPomodoro[]
-}): void {
-  console.log('Saving Firestore data to localStorage on sign-out')
-  console.log('Tasks:', data.tasks.length)
-  console.log('Projects:', data.projects.length)
-  console.log('Pomodoros:', data.pomodoros.length)
-  
-  // Use same keys as useGuestData hook
-  localStorage.setItem('pomodoro:guest:tasks', JSON.stringify(data.tasks))
-  localStorage.setItem('pomodoro:guest:projects', JSON.stringify(data.projects))
-  localStorage.setItem('pomodoro:guest:pomodoros', JSON.stringify(data.pomodoros))
-  
-  console.log('Data saved to localStorage')
-}
+// No automatic sync between localStorage and Firestore.
+// Signed in = Firestore (with built-in offline support)
+// Signed out = localStorage (guest mode, local only)

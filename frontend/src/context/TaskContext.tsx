@@ -1,8 +1,7 @@
-import { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react'
 import { useGuestData, GuestTask, GuestProject, GuestPomodoro } from '../hooks/useLocalStorage'
-import { useFirestoreData, mergeLocalToFirestore, clearLocalData } from '../hooks/useFirestoreData'
+import { useFirestoreData } from '../hooks/useFirestoreData'
 import { useAuth } from './AuthContext'
-import { isFirebaseConfigured } from '../lib/firebase'
 
 interface Task {
   id: string
@@ -30,8 +29,9 @@ interface TaskContextType {
   activeTask: Task | null
   todayPomodoros: number
   pomodoros: GuestPomodoro[]
-  guestTasks: GuestTask[]
-  guestProjects: GuestProject[]
+  // Raw data for stats (GuestTask/GuestProject format)
+  rawTasks: GuestTask[]
+  rawProjects: GuestProject[]
   isLoading: boolean
   isCloudSync: boolean
   
@@ -56,78 +56,14 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const guestData = useGuestData()
   const firestoreData = useFirestoreData(user?.id ?? null)
   const [activeTask, setActiveTask] = useState<Task | null>(null)
-  // Session-only flag to prevent multiple merges in same session
-  // NOT persisted to localStorage - we want merge to run on each sign-in
-  const [hasMigrated, setHasMigrated] = useState(false)
 
   // Choose data source based on auth state
+  // Signed in = Firestore (with built-in offline support)
+  // Signed out = localStorage (guest mode, local only)
+  // No automatic sync between them
   const isCloudSync = !!user
   const dataSource = isCloudSync ? firestoreData : guestData
   const isLoading = isCloudSync ? firestoreData.isLoading : false
-
-  // Track previous user for sign-out detection
-  const prevUserRef = useRef<string | null>(null)
-  const firestoreDataRef = useRef({ tasks: firestoreData.tasks, projects: firestoreData.projects, pomodoros: firestoreData.pomodoros })
-  
-  // Keep Firestore data ref updated
-  useEffect(() => {
-    if (user) {
-      firestoreDataRef.current = {
-        tasks: firestoreData.tasks,
-        projects: firestoreData.projects,
-        pomodoros: firestoreData.pomodoros,
-      }
-    }
-  }, [user, firestoreData.tasks, firestoreData.projects, firestoreData.pomodoros])
-
-  // Save Firestore data to guest state on sign-out
-  useEffect(() => {
-    const prevUser = prevUserRef.current
-    prevUserRef.current = user?.id ?? null
-    
-    // Detect sign-out: previous user existed, current user is null
-    if (prevUser && !user) {
-      const data = firestoreDataRef.current
-      if (data.tasks.length > 0 || data.projects.length > 0) {
-        // Update guest state directly (also persists to localStorage via useLocalStorage)
-        guestData.setAllTasks(data.tasks)
-        guestData.setAllProjects(data.projects)
-        guestData.setAllPomodoros(data.pomodoros)
-        console.log('Firestore data synced to guest state on sign-out')
-      }
-      // Reset migration flag so merge can run on next sign-in
-      setHasMigrated(false)
-    }
-  }, [user, guestData])
-
-  // Merge local data into Firestore on sign-in
-  // Waits for Firestore to load so we can compare and only add new items
-  useEffect(() => {
-    if (user && !hasMigrated && isFirebaseConfigured && !firestoreData.isLoading && guestData.tasks.length > 0) {
-      // User signed in and has local data - merge it with cloud data
-      mergeLocalToFirestore(
-        {
-          tasks: guestData.tasks,
-          projects: guestData.projects,
-          pomodoros: guestData.pomodoros,
-        },
-        {
-          tasks: firestoreData.tasks,
-          projects: firestoreData.projects,
-          pomodoros: firestoreData.pomodoros,
-        },
-        user.id
-      ).then((result) => {
-        // Mark as migrated so we don't do it again this session
-        setHasMigrated(true)
-        // Clear local data after successful merge
-        clearLocalData()
-        console.log('Merge result:', result.added)
-      })
-    }
-  // Only trigger when loading state changes or user changes
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, hasMigrated, firestoreData.isLoading])
 
   // Convert data to standard format
   const tasks: Task[] = dataSource.tasks.map((t: GuestTask) => ({
@@ -151,9 +87,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   }))
 
   const addTask = useCallback((title: string, projectId?: string, estimate = 1, dueDate?: string) => {
-    console.log('[TaskContext] addTask called:', { title, isCloudSync, userId: user?.id })
     dataSource.addTask(title, projectId, estimate, dueDate)
-  }, [dataSource, isCloudSync, user?.id])
+  }, [dataSource])
 
   const updateTask = useCallback((id: string, updates: Partial<Task>) => {
     // Only include properties that were explicitly provided in updates
@@ -231,8 +166,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         activeTask,
         todayPomodoros: dataSource.todayPomodoros,
         pomodoros: dataSource.pomodoros,
-        guestTasks: guestData.tasks,  // Always expose guest data for migration check
-        guestProjects: guestData.projects,
+        rawTasks: dataSource.tasks,
+        rawProjects: dataSource.projects,
         isLoading,
         isCloudSync,
         addTask,

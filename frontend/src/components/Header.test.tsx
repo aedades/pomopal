@@ -41,7 +41,8 @@ describe('Header', () => {
   it('renders app title', () => {
     render(<Header settings={defaultSettings} onUpdateSettings={vi.fn()} />)
 
-    expect(screen.getByText('pomo pal 🍅')).toBeInTheDocument()
+    // Check for heading containing app name (don't hardcode exact emoji placement)
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('pomo pal')
   })
 
   it('shows sign-in button when user is not authenticated', () => {
@@ -94,8 +95,8 @@ describe('Header', () => {
 
     fireEvent.click(screen.getByTitle('Help & Guide'))
 
-    // Help modal should appear (has "How to Use" heading)
-    expect(screen.getByRole('heading', { name: '🍅 How to Use' })).toBeInTheDocument()
+    // Help modal should appear (has "How to Use" in heading)
+    expect(screen.getByRole('heading', { name: /How to Use/i })).toBeInTheDocument()
   })
 })
 

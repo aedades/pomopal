@@ -8,13 +8,13 @@ describe('useStats', () => {
   const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
   
   const mockProjects: GuestProject[] = [
-    { id: 'p1', name: 'Work', color: '#ff0000', completed: false, createdAt: '2024-01-01' },
-    { id: 'p2', name: 'Personal', color: '#00ff00', completed: false, createdAt: '2024-01-01' },
+    { id: 'p1', name: 'Work', color: '#ff0000', completed: false, createdAt: '2024-01-01', updatedAt: '2024-01-01' },
+    { id: 'p2', name: 'Personal', color: '#00ff00', completed: false, createdAt: '2024-01-01', updatedAt: '2024-01-01' },
   ]
   
   const mockTasks: GuestTask[] = [
-    { id: 't1', title: 'Task 1', projectId: 'p1', completed: true, estimatedPomodoros: 2, actualPomodoros: 3, createdAt: '2024-01-01' },
-    { id: 't2', title: 'Task 2', projectId: 'p2', completed: false, estimatedPomodoros: 4, actualPomodoros: 1, createdAt: '2024-01-01' },
+    { id: 't1', title: 'Task 1', projectId: 'p1', completed: true, estimatedPomodoros: 2, actualPomodoros: 3, createdAt: '2024-01-01', updatedAt: '2024-01-01' },
+    { id: 't2', title: 'Task 2', projectId: 'p2', completed: false, estimatedPomodoros: 4, actualPomodoros: 1, createdAt: '2024-01-01', updatedAt: '2024-01-01' },
   ]
   
   it('calculates totals correctly', () => {
@@ -88,8 +88,8 @@ describe('useStats', () => {
   
   it('calculates estimation accuracy', () => {
     const tasks: GuestTask[] = [
-      { id: 't1', title: 'Task 1', completed: true, estimatedPomodoros: 2, actualPomodoros: 4, createdAt: '2024-01-01' }, // 200% - underestimated
-      { id: 't2', title: 'Task 2', completed: true, estimatedPomodoros: 4, actualPomodoros: 2, createdAt: '2024-01-01' }, // 50% - overestimated
+      { id: 't1', title: 'Task 1', completed: true, estimatedPomodoros: 2, actualPomodoros: 4, createdAt: '2024-01-01', updatedAt: '2024-01-01' }, // 200% - underestimated
+      { id: 't2', title: 'Task 2', completed: true, estimatedPomodoros: 4, actualPomodoros: 2, createdAt: '2024-01-01', updatedAt: '2024-01-01' }, // 50% - overestimated
     ]
     // Total: estimated 6, actual 6 => 100%
     

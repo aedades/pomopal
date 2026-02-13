@@ -62,6 +62,7 @@ export function useGuestData() {
   }, [todayCount.date, setTodayCount])
 
   const addTask = useCallback((title: string, projectId?: string, estimatedPomodoros = 1, dueDate?: string) => {
+    const now = new Date().toISOString()
     const newTask: GuestTask = {
       id: generateId(),
       title,
@@ -69,7 +70,8 @@ export function useGuestData() {
       completed: false,
       estimatedPomodoros,
       actualPomodoros: 0,
-      createdAt: new Date().toISOString(),
+      createdAt: now,
+      updatedAt: now,
       dueDate,
     }
     setTasks(prev => [newTask, ...prev])
@@ -77,7 +79,7 @@ export function useGuestData() {
   }, [setTasks])
 
   const updateTask = useCallback((id: string, updates: Partial<GuestTask>) => {
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t))
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates, updatedAt: new Date().toISOString() } : t))
   }, [setTasks])
 
   const deleteTask = useCallback((id: string) => {
@@ -85,23 +87,26 @@ export function useGuestData() {
   }, [setTasks])
 
   const addProject = useCallback((name: string, color = '#6366f1') => {
+    const now = new Date().toISOString()
     const newProject: GuestProject = {
       id: generateId(),
       name,
       color,
       completed: false,
-      createdAt: new Date().toISOString(),
+      createdAt: now,
+      updatedAt: now,
     }
     setProjects(prev => [newProject, ...prev])
     return newProject
   }, [setProjects])
 
   const updateProject = useCallback((id: string, updates: Partial<GuestProject>) => {
-    setProjects(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p))
+    const now = new Date().toISOString()
+    setProjects(prev => prev.map(p => p.id === id ? { ...p, ...updates, updatedAt: now } : p))
     // If completing project, complete all its tasks
     if (updates.completed) {
       setTasks(prev => prev.map(t => 
-        t.projectId === id ? { ...t, completed: true, completedAt: new Date().toISOString() } : t
+        t.projectId === id ? { ...t, completed: true, completedAt: now, updatedAt: now } : t
       ))
     }
   }, [setProjects, setTasks])
@@ -159,19 +164,6 @@ export function useGuestData() {
     })
   }, [setTasks])
 
-  // Bulk set functions for syncing from Firestore on sign-out
-  const setAllTasks = useCallback((newTasks: GuestTask[]) => {
-    setTasks(newTasks)
-  }, [setTasks])
-
-  const setAllProjects = useCallback((newProjects: GuestProject[]) => {
-    setProjects(newProjects)
-  }, [setProjects])
-
-  const setAllPomodoros = useCallback((newPomodoros: GuestPomodoro[]) => {
-    setPomodoros(newPomodoros)
-  }, [setPomodoros])
-
   return {
     tasks,
     projects,
@@ -185,10 +177,6 @@ export function useGuestData() {
     deleteProject,
     recordPomodoro,
     reorderTasks,
-    // Bulk setters for sync
-    setAllTasks,
-    setAllProjects,
-    setAllPomodoros,
   }
 }
 
@@ -202,6 +190,7 @@ export interface GuestTask {
   estimatedPomodoros: number
   actualPomodoros: number
   createdAt: string
+  updatedAt: string // Last edit timestamp for conflict resolution
   dueDate?: string // ISO date string (optional)
   sortOrder?: number // For manual ordering of undated tasks
 }
@@ -213,6 +202,7 @@ export interface GuestProject {
   completed: boolean
   completedAt?: string
   createdAt: string
+  updatedAt: string // Last edit timestamp for conflict resolution
   dueDate?: string // ISO date string (optional)
 }
 
