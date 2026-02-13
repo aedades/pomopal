@@ -1,6 +1,8 @@
-# Pomodoro Timer 🍅
+# pomo pal 🍅
 
-A PWA pomodoro timer with push notifications, multi-device sync, and flow mode.
+A friendly pomodoro timer PWA with push notifications, multi-device sync, and flow mode.
+
+**Live:** https://pomopal.web.app
 
 ## Features
 
@@ -96,16 +98,42 @@ npm run deploy
 
 ## Deployment
 
-### GitHub Pages (Free)
+### Environments
 
-Push to `main` — GitHub Actions auto-deploys.
+| Environment | URL | Trigger |
+|-------------|-----|---------|
+| **Preview** | `pomopal--pr-XXX.web.app` | PR opened |
+| **Staging** | `pomopal--staging.web.app` | Push to `main` |
+| **Production** | `pomopal.web.app` | Manual deploy |
 
+### Deploy to Production
+
+**Via GitHub UI:**
+1. Go to **Actions** → **Deploy to Production**
+2. Click **Run workflow**
+3. Enter version (e.g., `v1.0.0`) or leave empty for latest
+4. Click **Run**
+
+**Via CLI (requires `gh` CLI):**
 ```bash
-git push origin main
-# App available at https://USERNAME.github.io/pomodoro/
+# Deploy specific version
+gh workflow run deploy-production.yml -f version=v1.0.0
+
+# Deploy latest release
+gh workflow run deploy-production.yml
+
+# Check deployment status
+gh run list --workflow=deploy-production.yml
 ```
 
-### Firebase Hosting
+### Release Process
+
+1. Merge PRs with `feat:` or `fix:` prefixes
+2. Release-please auto-creates a Release PR
+3. Merge Release PR → creates GitHub release + tag
+4. Deploy when ready: `gh workflow run deploy-production.yml`
+
+### Manual Firebase Deploy
 
 ```bash
 cd frontend

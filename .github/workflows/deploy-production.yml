@@ -1,17 +1,13 @@
 name: Deploy to Production
 
 on:
-  # Manual trigger with version input
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release tag to deploy (e.g., v1.0.0)'
-        required: true
+        description: 'Release tag to deploy (e.g., v1.0.0). Leave empty for latest.'
+        required: false
         type: string
-  
-  # Or auto-deploy on new releases (optional - comment out if you want manual only)
-  # release:
-  #   types: [published]
+        default: ''
 
 jobs:
   deploy:
@@ -19,14 +15,33 @@ jobs:
     environment: production
     
     steps:
-      - name: Checkout release tag
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.version || github.event.release.tag_name }}
+          fetch-depth: 0  # Need full history for tags
 
-      - name: Verify tag exists
+      - name: Get version to deploy
+        id: version
         run: |
-          echo "Deploying version: ${{ github.event.inputs.version || github.event.release.tag_name }}"
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            # Get latest semver tag
+            VERSION=$(git tag -l 'v*' --sort=-v:refname | head -n 1)
+            if [ -z "$VERSION" ]; then
+              echo "No version tags found!"
+              exit 1
+            fi
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Deploying version: $VERSION"
+
+      - name: Checkout release tag
+        run: git checkout ${{ steps.version.outputs.version }}
+
+      - name: Verify tag
+        run: |
+          echo "Deploying: ${{ steps.version.outputs.version }}"
           git describe --tags --exact-match HEAD
 
       - name: Setup Node
