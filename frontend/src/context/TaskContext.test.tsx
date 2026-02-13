@@ -375,23 +375,6 @@ describe('TaskContext migration state', () => {
     localStorage.clear();
   });
 
-  it('clears migration flag from localStorage on saveToLocalStorage', async () => {
-    // Set migration flag as if user was previously signed in
-    localStorage.setItem('pomodoro:migrated', 'true');
-    
-    // Import the function directly to test it
-    const { saveToLocalStorage } = await import('../hooks/useFirestoreData');
-    
-    saveToLocalStorage({
-      tasks: [{ id: 't1', title: 'Test', completed: false, estimatedPomodoros: 1, actualPomodoros: 0, createdAt: new Date().toISOString() }],
-      projects: [],
-      pomodoros: [],
-    });
-    
-    // Migration flag should be cleared
-    expect(localStorage.getItem('pomodoro:migrated')).toBeNull();
-  });
-
   it('saves tasks to localStorage when saveToLocalStorage is called', async () => {
     const { saveToLocalStorage } = await import('../hooks/useFirestoreData');
     
@@ -408,18 +391,16 @@ describe('TaskContext migration state', () => {
     expect(saved[1].title).toBe('Task 2');
   });
 
-  it('initializes hasMigrated from localStorage', () => {
-    // Set migration flag before rendering
-    localStorage.setItem('pomodoro:migrated', 'true');
-    
-    // The TaskProvider reads this on mount
+  it('hasMigrated starts as false on each mount (session-only flag)', () => {
+    // hasMigrated is now a session-only flag, not persisted to localStorage
+    // This ensures merge runs on each sign-in, not just the first time ever
     render(
       <TestWrapper>
         <TestComponent />
       </TestWrapper>
     );
     
-    // Component should render successfully
+    // Component should render successfully with no tasks
     expect(screen.getByTestId('task-count')).toHaveTextContent('0');
   });
 
