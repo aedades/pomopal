@@ -97,16 +97,18 @@ export function useFirestoreData(userId: string | null) {
       return null
     }
     
+    // Firestore doesn't accept undefined values, so only include defined fields
     const newTask: GuestTask = {
       id: generateId(),
       title,
-      projectId,
       completed: false,
       estimatedPomodoros,
       actualPomodoros: 0,
       createdAt: new Date().toISOString(),
-      dueDate,
     }
+    // Only add optional fields if they're defined
+    if (projectId !== undefined) newTask.projectId = projectId
+    if (dueDate !== undefined) newTask.dueDate = dueDate
 
     try {
       console.log('[Firestore] Writing task to:', `users/${userId}/tasks/${newTask.id}`)
@@ -122,8 +124,13 @@ export function useFirestoreData(userId: string | null) {
   const updateTask = useCallback(async (id: string, updates: Partial<GuestTask>) => {
     if (!userId || !db) return
 
+    // Filter out undefined values - Firestore doesn't accept them
+    const cleanUpdates = Object.fromEntries(
+      Object.entries(updates).filter(([_, v]) => v !== undefined)
+    )
+
     try {
-      await setDoc(doc(db, 'users', userId, 'tasks', id), updates, { merge: true })
+      await setDoc(doc(db, 'users', userId, 'tasks', id), cleanUpdates, { merge: true })
     } catch (error) {
       console.error('Error updating task:', error)
     }
@@ -162,8 +169,13 @@ export function useFirestoreData(userId: string | null) {
   const updateProject = useCallback(async (id: string, updates: Partial<GuestProject>) => {
     if (!userId || !db) return
 
+    // Filter out undefined values - Firestore doesn't accept them
+    const cleanUpdates = Object.fromEntries(
+      Object.entries(updates).filter(([_, v]) => v !== undefined)
+    )
+
     try {
-      await setDoc(doc(db, 'users', userId, 'projects', id), updates, { merge: true })
+      await setDoc(doc(db, 'users', userId, 'projects', id), cleanUpdates, { merge: true })
     } catch (error) {
       console.error('Error updating project:', error)
     }
