@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.6](https://github.com/aedades/pomopal/compare/v1.1.5...v1.1.6) (2026-02-13)
+
+
+### Bug Fixes
+
+* update guest state directly on sign-out (not just localStorage) ([#29](https://github.com/aedades/pomopal/issues/29)) ([2b1a65d](https://github.com/aedades/pomopal/commit/2b1a65d7f44ca1b2a20a3c31b604d37737234ea9))
+
 ## [1.1.5](https://github.com/aedades/pomopal/compare/v1.1.4...v1.1.5) (2026-02-13)
 
 
