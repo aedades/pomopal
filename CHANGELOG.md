@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.3](https://github.com/aedades/pomopal/compare/v1.1.2...v1.1.3) (2026-02-13)
+
+
+### Bug Fixes
+
+* reset migration state on sign-out ([#23](https://github.com/aedades/pomopal/issues/23)) ([8fe36eb](https://github.com/aedades/pomopal/commit/8fe36eb8dc26894f32303b4df90985169f38ab20))
+
 ## [1.1.2](https://github.com/aedades/pomopal/compare/v1.1.1...v1.1.2) (2026-02-13)
 
 
