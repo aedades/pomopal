@@ -1,7 +1,8 @@
-import { useEffect, useCallback, useState } from 'react'
+import { useEffect, useCallback, useState, useRef } from 'react'
 import { useSettings } from './hooks/useSettings'
 import { useTimer } from './hooks/useTimer'
 import { useNotifications } from './hooks/useNotifications'
+import { useTimerNotifications } from './hooks/useTimerNotifications'
 import { useStats } from './hooks/useStats'
 import Timer from './components/Timer'
 import TaskList from './components/TaskList'
@@ -19,7 +20,9 @@ function AppContent() {
   const { settings, updateSettings } = useSettings()
   const { activeTask, todayPomodoros, recordPomodoro, pomodoros, guestTasks, guestProjects, isCloudSync } = useTaskContext()
   const { permission, requestPermission } = useNotifications()
+  const { scheduleNotification, cancelNotification } = useTimerNotifications()
   const [showIOSInstructions, setShowIOSInstructions] = useState(false)
+  const prevRunningRef = useRef(false)
   const [view, setView] = useState<View>('timer')
   const stats = useStats(pomodoros, guestTasks, guestProjects)
   
@@ -43,6 +46,25 @@ function AppContent() {
   )
 
   const timer = useTimer({ settings, onComplete: handleTimerComplete })
+
+  // Schedule/cancel push notifications when timer starts/stops
+  useEffect(() => {
+    const wasRunning = prevRunningRef.current
+    const isNowRunning = timer.isRunning
+
+    if (!wasRunning && isNowRunning && !timer.isFlowMode) {
+      // Timer just started (non-flow mode) - schedule notification
+      const durationMs = timer.timeLeft * 1000
+      const notificationType = timer.mode === 'work' ? 'focus' : 
+        timer.mode === 'shortBreak' ? 'shortBreak' : 'longBreak'
+      scheduleNotification(durationMs, notificationType)
+    } else if (wasRunning && !isNowRunning) {
+      // Timer just stopped - cancel any scheduled notification
+      cancelNotification()
+    }
+
+    prevRunningRef.current = isNowRunning
+  }, [timer.isRunning, timer.isFlowMode, timer.timeLeft, timer.mode, scheduleNotification, cancelNotification])
 
   // Keyboard shortcuts
   useEffect(() => {
