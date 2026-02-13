@@ -74,7 +74,7 @@ export default function Header({ settings, onUpdateSettings }: HeaderProps) {
     <header className="flex items-center justify-between mb-6">
       <div className="flex items-center gap-3">
         <span className="text-3xl">🍅</span>
-        <h1 className="text-2xl font-bold text-white dark:text-gray-100">pomo pal 🍅</h1>
+        <h1 className="text-2xl font-bold text-white dark:text-gray-100">pomo pal</h1>
       </div>
 
       <div className="flex items-center gap-3">
