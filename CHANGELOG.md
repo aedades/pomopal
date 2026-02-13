@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0](https://github.com/aedades/pomopal/compare/v1.1.6...v1.2.0) (2026-02-13)
+
+
+### Features
+
+* sync settings to Firestore when logged in ([#33](https://github.com/aedades/pomopal/issues/33)) ([01591d3](https://github.com/aedades/pomopal/commit/01591d33fef345ea311499ccb3cdbc75a5a9f379))
+
+
+### Bug Fixes
+
+* simplify data model - no automatic sync between guest and cloud ([32a2db0](https://github.com/aedades/pomopal/commit/32a2db0d349d0de2687ddddd5f581b78c3248f76))
+
 ## [1.1.6](https://github.com/aedades/pomopal/compare/v1.1.5...v1.1.6) (2026-02-13)
 
 
