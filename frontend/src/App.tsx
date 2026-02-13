@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState, useRef } from 'react'
+import { useEffect, useCallback, useState, useRef, useMemo } from 'react'
 import { useSettings } from './hooks/useSettings'
 import { useTimer, TimerState } from './hooks/useTimer'
 import { useTimerSync } from './hooks/useTimerSync'
@@ -16,6 +16,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import { VERSION } from './version'
 
 type View = 'timer' | 'stats'
+type StatsPeriod = '30d' | '1y' | 'all'
 
 function AppContent() {
   const { user } = useAuth()
@@ -29,7 +30,31 @@ function AppContent() {
   const appliedRemoteRef = useRef(false)
   const lastSyncedStateRef = useRef<string>('')
   const [view, setView] = useState<View>('timer')
-  const stats = useStats(pomodoros, rawTasks, rawProjects, {
+  const [statsPeriod, setStatsPeriod] = useState<StatsPeriod>('30d')
+  
+  // Filter pomodoros based on selected time period
+  const filteredPomodoros = useMemo(() => {
+    const now = new Date()
+    let cutoff: Date
+    
+    switch (statsPeriod) {
+      case '30d':
+        cutoff = new Date(now)
+        cutoff.setDate(cutoff.getDate() - 30)
+        break
+      case '1y':
+        cutoff = new Date(now)
+        cutoff.setFullYear(cutoff.getFullYear() - 1)
+        break
+      case 'all':
+      default:
+        return pomodoros
+    }
+    
+    return pomodoros.filter(p => new Date(p.completedAt) >= cutoff)
+  }, [pomodoros, statsPeriod])
+  
+  const stats = useStats(filteredPomodoros, rawTasks, rawProjects, {
     excludeWeekendsFromStreak: settings.exclude_weekends_from_streak,
   })
   
@@ -250,7 +275,7 @@ function AppContent() {
               <TaskList />
             </>
           ) : (
-            <Stats stats={stats} />
+            <Stats stats={stats} period={statsPeriod} onPeriodChange={setStatsPeriod} />
           )}
         </main>
 
