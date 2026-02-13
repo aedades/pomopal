@@ -283,20 +283,6 @@ describe('saveToLocalStorage', () => {
     expect(JSON.parse(localStorage.getItem('pomodoro:guest:pomodoros') || '[]')).toEqual(data.pomodoros)
   })
 
-  it('clears migration flag so data can be re-merged on next sign-in', async () => {
-    vi.doMock('../lib/firebase', () => ({
-      db: null,
-      isFirebaseConfigured: false,
-    }))
-    const { saveToLocalStorage } = await import('./useFirestoreData')
-    
-    localStorage.setItem('pomodoro:migrated', 'true')
-
-    saveToLocalStorage({ tasks: [], projects: [], pomodoros: [] })
-
-    expect(localStorage.getItem('pomodoro:migrated')).toBeNull()
-  })
-
   it('overwrites existing localStorage data', async () => {
     vi.doMock('../lib/firebase', () => ({
       db: null,

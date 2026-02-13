@@ -56,9 +56,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const guestData = useGuestData()
   const firestoreData = useFirestoreData(user?.id ?? null)
   const [activeTask, setActiveTask] = useState<Task | null>(null)
-  const [hasMigrated, setHasMigrated] = useState(() => {
-    return localStorage.getItem('pomodoro:migrated') === 'true'
-  })
+  // Session-only flag to prevent multiple merges in same session
+  // NOT persisted to localStorage - we want merge to run on each sign-in
+  const [hasMigrated, setHasMigrated] = useState(false)
 
   // Choose data source based on auth state
   const isCloudSync = !!user
@@ -115,7 +115,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         user.id
       ).then((result) => {
         // Mark as migrated so we don't do it again this session
-        localStorage.setItem('pomodoro:migrated', 'true')
         setHasMigrated(true)
         // Clear local data after successful merge
         clearLocalData()

@@ -374,8 +374,5 @@ export function saveToLocalStorage(data: {
   localStorage.setItem('pomodoro:guest:projects', JSON.stringify(data.projects))
   localStorage.setItem('pomodoro:guest:pomodoros', JSON.stringify(data.pomodoros))
   
-  // Reset migration flag so data can be re-migrated on next sign-in
-  localStorage.removeItem('pomodoro:migrated')
-  
   console.log('Data saved to localStorage')
 }
