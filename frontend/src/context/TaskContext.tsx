@@ -12,6 +12,7 @@ interface Task {
   estimated_pomodoros: number
   actual_pomodoros: number
   due_date?: string
+  sort_order?: number
 }
 
 interface Project {
@@ -35,6 +36,7 @@ interface TaskContextType {
   addTask: (title: string, projectId?: string, estimate?: number, dueDate?: string) => void
   updateTask: (id: string, updates: Partial<Task>) => void
   deleteTask: (id: string) => void
+  reorderTasks: (taskIds: string[]) => void
   setActiveTask: (task: Task | null) => void
   
   addProject: (name: string, color?: string) => void
@@ -94,6 +96,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     estimated_pomodoros: t.estimatedPomodoros,
     actual_pomodoros: t.actualPomodoros,
     due_date: t.dueDate,
+    sort_order: t.sortOrder,
   }))
 
   const projects: Project[] = dataSource.projects.map((p: GuestProject) => ({
@@ -126,6 +129,10 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       setActiveTask(null)
     }
   }, [dataSource, activeTask])
+
+  const reorderTasks = useCallback((taskIds: string[]) => {
+    dataSource.reorderTasks(taskIds)
+  }, [dataSource])
 
   const addProject = useCallback((name: string, color?: string) => {
     dataSource.addProject(name, color)
@@ -181,6 +188,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         addTask,
         updateTask,
         deleteTask,
+        reorderTasks,
         setActiveTask,
         addProject,
         updateProject,

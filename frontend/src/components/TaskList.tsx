@@ -44,6 +44,7 @@ interface Task {
   estimated_pomodoros: number
   actual_pomodoros: number
   due_date?: string
+  sort_order?: number
 }
 
 export default function TaskList() {
@@ -55,10 +56,12 @@ export default function TaskList() {
     addTask,
     updateTask,
     deleteTask,
+    reorderTasks,
     addProject,
     deleteProjectWithTasks,
   } = useTaskContext()
   const { settings } = useSettings()
+  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null)
   
   const [newTask, setNewTask] = useState('')
   const [selectedProject, setSelectedProject] = useState<string>('')  // Used for both filter AND new task assignment
@@ -101,7 +104,7 @@ export default function TaskList() {
   const incompleteTasks = tasks.filter((t) => !t.completed)
   const completedTasks = tasks.filter((t) => t.completed)
   
-  // Sort incomplete tasks by due date
+  // Sort incomplete tasks by due date, and use sortOrder for undated tasks
   const sortedIncompleteTasks = [...incompleteTasks].sort((a, b) => {
     const aHasDue = !!a.due_date
     const bHasDue = !!b.due_date
@@ -120,13 +123,64 @@ export default function TaskList() {
       }
     }
     
-    // Both undated - keep original order
-    return 0
+    // Both undated - sort by sortOrder (manual reorder)
+    const aOrder = a.sort_order ?? Infinity
+    const bOrder = b.sort_order ?? Infinity
+    return aOrder - bOrder
   })
   
   const sortedTasks = settings.move_completed_to_bottom
     ? [...sortedIncompleteTasks, ...completedTasks]
     : sortedIncompleteTasks
+  
+  // Handle drag and drop for undated tasks
+  const handleDragStart = (e: React.DragEvent, taskId: string) => {
+    setDraggedTaskId(taskId)
+    e.dataTransfer.effectAllowed = 'move'
+  }
+  
+  const handleDragOver = (e: React.DragEvent, taskId: string) => {
+    e.preventDefault()
+    if (!draggedTaskId || draggedTaskId === taskId) return
+    
+    // Only allow reordering undated tasks
+    const draggedTask = tasks.find(t => t.id === draggedTaskId)
+    const targetTask = tasks.find(t => t.id === taskId)
+    if (draggedTask?.due_date || targetTask?.due_date) return
+    
+    e.dataTransfer.dropEffect = 'move'
+  }
+  
+  const handleDrop = (e: React.DragEvent, targetTaskId: string) => {
+    e.preventDefault()
+    if (!draggedTaskId || draggedTaskId === targetTaskId) {
+      setDraggedTaskId(null)
+      return
+    }
+    
+    // Get current undated task order
+    const undatedTasks = sortedIncompleteTasks.filter(t => !t.due_date && !t.completed)
+    const draggedIndex = undatedTasks.findIndex(t => t.id === draggedTaskId)
+    const targetIndex = undatedTasks.findIndex(t => t.id === targetTaskId)
+    
+    if (draggedIndex === -1 || targetIndex === -1) {
+      setDraggedTaskId(null)
+      return
+    }
+    
+    // Reorder
+    const newOrder = [...undatedTasks]
+    const [removed] = newOrder.splice(draggedIndex, 1)
+    newOrder.splice(targetIndex, 0, removed)
+    
+    // Update sort order
+    reorderTasks(newOrder.map(t => t.id))
+    setDraggedTaskId(null)
+  }
+  
+  const handleDragEnd = () => {
+    setDraggedTaskId(null)
+  }
 
   // Filter tasks: '' = all, 'none' = no project, otherwise by project ID
   const filteredTasks = sortedTasks.filter(t => {
@@ -193,10 +247,16 @@ export default function TaskList() {
             key={task.id}
             task={task}
             isActive={activeTask?.id === task.id}
+            isDragging={draggedTaskId === task.id}
+            isDraggable={!task.due_date && !task.completed}
             onSelect={() => selectTask(task)}
             onToggle={() => toggleComplete(task)}
             onEdit={() => setEditingTask(task)}
             onDelete={() => deleteTask(task.id)}
+            onDragStart={(e) => handleDragStart(e, task.id)}
+            onDragOver={(e) => handleDragOver(e, task.id)}
+            onDrop={(e) => handleDrop(e, task.id)}
+            onDragEnd={handleDragEnd}
           />
         ))}
       </ul>
@@ -219,10 +279,16 @@ export default function TaskList() {
                 key={task.id}
                 task={task}
                 isActive={false}
+                isDragging={false}
+                isDraggable={false}
                 onSelect={() => {}}
                 onToggle={() => toggleComplete(task)}
                 onEdit={() => setEditingTask(task)}
                 onDelete={() => deleteTask(task.id)}
+                onDragStart={() => {}}
+                onDragOver={() => {}}
+                onDrop={() => {}}
+                onDragEnd={() => {}}
               />
             ))}
           </ul>
@@ -272,29 +338,55 @@ export default function TaskList() {
 function TaskItem({
   task,
   isActive,
+  isDragging,
+  isDraggable,
   onSelect,
   onToggle,
   onEdit,
   onDelete,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
 }: {
   task: Task
   isActive: boolean
+  isDragging: boolean
+  isDraggable: boolean
   onSelect: () => void
   onToggle: () => void
   onEdit: () => void
   onDelete: () => void
+  onDragStart: (e: React.DragEvent) => void
+  onDragOver: (e: React.DragEvent) => void
+  onDrop: (e: React.DragEvent) => void
+  onDragEnd: () => void
 }) {
   return (
     <li
+      draggable={isDraggable}
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      onDragEnd={onDragEnd}
       className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
-        isActive
+        isDragging
+          ? 'opacity-50 bg-gray-100 dark:bg-gray-600'
+          : isActive
           ? 'bg-red-50 dark:bg-red-900/30 border-2 border-red-500'
           : task.completed
           ? 'bg-gray-50 dark:bg-gray-700/50'
           : 'bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer'
-      }`}
+      } ${isDraggable ? 'cursor-grab active:cursor-grabbing' : ''}`}
       onClick={onSelect}
     >
+      {/* Drag handle for undated tasks */}
+      {isDraggable && (
+        <span className="text-gray-300 dark:text-gray-600 flex-shrink-0 cursor-grab" title="Drag to reorder">
+          ⋮⋮
+        </span>
+      )}
+      
       <button
         onClick={(e) => {
           e.stopPropagation()

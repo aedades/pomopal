@@ -193,6 +193,30 @@ export function useFirestoreData(userId: string | null) {
     }
   }, [userId])
 
+  const reorderTasks = useCallback((taskIds: string[]) => {
+    if (!userId) return
+
+    // TODO: Uncomment when Firebase ready
+    // const batch = writeBatch(db)
+    // taskIds.forEach((id, index) => {
+    //   const ref = doc(db, 'users', userId, 'tasks', id)
+    //   batch.update(ref, { sortOrder: index })
+    // })
+    // await batch.commit()
+    
+    // Stub: update local state
+    setTasks(prev => {
+      const updated = [...prev]
+      taskIds.forEach((id, index) => {
+        const taskIndex = updated.findIndex(t => t.id === id)
+        if (taskIndex !== -1) {
+          updated[taskIndex] = { ...updated[taskIndex], sortOrder: index }
+        }
+      })
+      return updated
+    })
+  }, [userId])
+
   return {
     tasks,
     projects,
@@ -206,6 +230,7 @@ export function useFirestoreData(userId: string | null) {
     updateProject,
     deleteProject,
     recordPomodoro,
+    reorderTasks,
   }
 }
 

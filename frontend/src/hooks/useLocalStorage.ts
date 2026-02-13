@@ -145,6 +145,20 @@ export function useGuestData() {
     return todayCount.date === today ? todayCount.count : 0
   }, [todayCount])
 
+  // Reorder undated tasks by updating their sortOrder
+  const reorderTasks = useCallback((taskIds: string[]) => {
+    setTasks(prev => {
+      const updated = [...prev]
+      taskIds.forEach((id, index) => {
+        const taskIndex = updated.findIndex(t => t.id === id)
+        if (taskIndex !== -1) {
+          updated[taskIndex] = { ...updated[taskIndex], sortOrder: index }
+        }
+      })
+      return updated
+    })
+  }, [setTasks])
+
   return {
     tasks,
     projects,
@@ -157,6 +171,7 @@ export function useGuestData() {
     updateProject,
     deleteProject,
     recordPomodoro,
+    reorderTasks,
   }
 }
 
@@ -171,6 +186,7 @@ export interface GuestTask {
   actualPomodoros: number
   createdAt: string
   dueDate?: string // ISO date string (optional)
+  sortOrder?: number // For manual ordering of undated tasks
 }
 
 export interface GuestProject {
