@@ -22,6 +22,10 @@ Follow this for every feature/fix:
 - [ ] Commit with descriptive message
 - [ ] Push to trigger CI/CD
 
+## PR Policy
+- [ ] Create PR with clear description
+- [ ] **Wait for Amanda to approve/merge** — do NOT self-merge
+
 ---
 
 ## Version Bumping
