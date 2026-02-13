@@ -19,7 +19,7 @@ type View = 'timer' | 'stats'
 
 function AppContent() {
   const { settings, updateSettings } = useSettings()
-  const { activeTask, todayPomodoros, recordPomodoro, pomodoros, guestTasks, guestProjects, isCloudSync } = useTaskContext()
+  const { activeTask, todayPomodoros, recordPomodoro, pomodoros, rawTasks, rawProjects, isCloudSync } = useTaskContext()
   const { permission, requestPermission } = useNotifications()
   const { scheduleNotification, cancelNotification } = useTimerNotifications()
   const { remoteState, syncTimerState, isSyncEnabled } = useTimerSync()
@@ -28,7 +28,7 @@ function AppContent() {
   const appliedRemoteRef = useRef(false)
   const lastSyncedStateRef = useRef<string>('')
   const [view, setView] = useState<View>('timer')
-  const stats = useStats(pomodoros, guestTasks, guestProjects)
+  const stats = useStats(pomodoros, rawTasks, rawProjects)
   
   // Show iOS instructions on first visit for iOS users
   useEffect(() => {

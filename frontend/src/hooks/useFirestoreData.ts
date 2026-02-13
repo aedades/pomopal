@@ -7,7 +7,8 @@ import {
   onSnapshot,
   query,
   where,
-  orderBy
+  orderBy,
+  writeBatch
 } from 'firebase/firestore'
 import { db, isFirebaseConfigured } from '../lib/firebase'
 import type { GuestTask, GuestProject, GuestPomodoro } from './useLocalStorage'

@@ -29,6 +29,9 @@ interface TaskContextType {
   activeTask: Task | null
   todayPomodoros: number
   pomodoros: GuestPomodoro[]
+  // Raw data for stats (GuestTask/GuestProject format)
+  rawTasks: GuestTask[]
+  rawProjects: GuestProject[]
   isLoading: boolean
   isCloudSync: boolean
   
@@ -163,6 +166,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         activeTask,
         todayPomodoros: dataSource.todayPomodoros,
         pomodoros: dataSource.pomodoros,
+        rawTasks: dataSource.tasks,
+        rawProjects: dataSource.projects,
         isLoading,
         isCloudSync,
         addTask,
