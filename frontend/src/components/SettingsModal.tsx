@@ -7,6 +7,43 @@ interface SettingsModalProps {
   onClose: () => void
 }
 
+// Number input that allows empty while typing, validates on blur
+function GoalInput({ id, value, onChange, defaultValue = 8 }: { 
+  id?: string
+  value: number
+  onChange: (n: number) => void
+  defaultValue?: number 
+}) {
+  const [localValue, setLocalValue] = useState(String(value))
+  
+  // Sync from props when value changes externally
+  const handleBlur = () => {
+    const num = parseInt(localValue)
+    if (isNaN(num) || num < 1) {
+      setLocalValue(String(defaultValue))
+      onChange(defaultValue)
+    } else if (num > 99) {
+      setLocalValue('99')
+      onChange(99)
+    } else {
+      onChange(num)
+    }
+  }
+  
+  return (
+    <input
+      id={id}
+      type="text"
+      inputMode="numeric"
+      pattern="[0-9]*"
+      value={localValue}
+      onChange={(e) => setLocalValue(e.target.value)}
+      onBlur={handleBlur}
+      className="w-20 px-3 py-2 border rounded-lg text-center dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+    />
+  )
+}
+
 // Help tooltip component
 function HelpTip({ text }: { text: string }) {
   const [show, setShow] = useState(false)
@@ -111,29 +148,10 @@ export default function SettingsModal({ settings, onUpdate, onClose }: SettingsM
                   <label htmlFor="daily-goal" className="text-gray-600 dark:text-gray-400 text-sm">
                     Target
                   </label>
-                  <input
+                  <GoalInput
                     id="daily-goal"
-                    type="number"
                     value={settings.daily_pomodoro_goal}
-                    onChange={(e) => {
-                      const val = e.target.value
-                      // Allow empty while typing, but enforce min 1 on blur
-                      if (val === '') return
-                      const num = parseInt(val)
-                      if (!isNaN(num) && num >= 1 && num <= 99) {
-                        onUpdate({ daily_pomodoro_goal: num })
-                      }
-                    }}
-                    onBlur={(e) => {
-                      // Ensure valid value on blur
-                      const num = parseInt(e.target.value)
-                      if (isNaN(num) || num < 1) {
-                        onUpdate({ daily_pomodoro_goal: 8 })
-                      }
-                    }}
-                    className="w-20 px-3 py-2 border rounded-lg text-center dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    min="1"
-                    max="99"
+                    onChange={(n) => onUpdate({ daily_pomodoro_goal: n })}
                   />
                 </div>
               )}

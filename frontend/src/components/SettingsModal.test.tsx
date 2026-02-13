@@ -42,8 +42,8 @@ describe('SettingsModal', () => {
     );
 
     expect(screen.getByLabelText(/work/i)).toHaveValue(45);
-    // Daily goal input is now labeled "Target" under the toggle
-    expect(screen.getByLabelText(/target/i)).toHaveValue(12);
+    // Daily goal input is now labeled "Target" under the toggle (text input)
+    expect(screen.getByLabelText(/target/i)).toHaveValue('12');
   });
 
   it('calls onUpdate with new value when timer duration changes', () => {
