@@ -610,19 +610,40 @@ function EditTaskModal({
   const [title, setTitle] = useState(task.title)
   const [projectId, setProjectId] = useState(task.project_id || '')
   const [estimate, setEstimate] = useState(task.estimated_pomodoros)
-  // Format existing due date for datetime-local input (YYYY-MM-DDTHH:MM)
+  // Separate date and optional time
   const [dueDate, setDueDate] = useState(() => {
     if (!task.due_date) return ''
     const d = new Date(task.due_date)
-    return d.toISOString().slice(0, 16)
+    return d.toISOString().slice(0, 10) // YYYY-MM-DD
+  })
+  const [dueTime, setDueTime] = useState(() => {
+    if (!task.due_date) return ''
+    const d = new Date(task.due_date)
+    // Only show time if it's not midnight (meaning time was intentionally set)
+    if (d.getHours() === 0 && d.getMinutes() === 0) return ''
+    return d.toTimeString().slice(0, 5) // HH:MM
+  })
+  const [includeTime, setIncludeTime] = useState(() => {
+    if (!task.due_date) return false
+    const d = new Date(task.due_date)
+    return !(d.getHours() === 0 && d.getMinutes() === 0)
   })
 
   const handleSave = () => {
+    let dueDateISO: string | undefined
+    if (dueDate) {
+      if (includeTime && dueTime) {
+        dueDateISO = new Date(`${dueDate}T${dueTime}`).toISOString()
+      } else {
+        // Date only - store as start of day in local timezone
+        dueDateISO = new Date(`${dueDate}T00:00:00`).toISOString()
+      }
+    }
     onSave({
       title: title.trim() || task.title,
       project_id: projectId || undefined,
       estimated_pomodoros: estimate,
-      due_date: dueDate ? new Date(dueDate).toISOString() : undefined,
+      due_date: dueDateISO,
     })
   }
 
@@ -671,7 +692,7 @@ function EditTaskModal({
             </label>
             <div className="flex gap-2">
               <input
-                type="datetime-local"
+                type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
                 className="flex-1 px-3 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
@@ -679,7 +700,7 @@ function EditTaskModal({
               {dueDate && (
                 <button
                   type="button"
-                  onClick={() => setDueDate('')}
+                  onClick={() => { setDueDate(''); setDueTime(''); setIncludeTime(false) }}
                   className="px-3 py-2 text-gray-500 hover:text-red-500 border border-gray-200 dark:border-gray-600 rounded-lg"
                   title="Clear due date"
                 >
@@ -687,6 +708,30 @@ function EditTaskModal({
                 </button>
               )}
             </div>
+            {dueDate && (
+              <div className="mt-2">
+                <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                  <input
+                    type="checkbox"
+                    checked={includeTime}
+                    onChange={(e) => {
+                      setIncludeTime(e.target.checked)
+                      if (!e.target.checked) setDueTime('')
+                    }}
+                    className="rounded"
+                  />
+                  Include time
+                </label>
+                {includeTime && (
+                  <input
+                    type="time"
+                    value={dueTime}
+                    onChange={(e) => setDueTime(e.target.value)}
+                    className="mt-2 w-full px-3 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                  />
+                )}
+              </div>
+            )}
           </div>
 
           <div>
@@ -737,14 +782,33 @@ function EditProjectModal({
   const [dueDate, setDueDate] = useState(() => {
     if (!project.due_date) return ''
     const d = new Date(project.due_date)
-    return d.toISOString().slice(0, 16)
+    return d.toISOString().slice(0, 10) // YYYY-MM-DD
+  })
+  const [dueTime, setDueTime] = useState(() => {
+    if (!project.due_date) return ''
+    const d = new Date(project.due_date)
+    if (d.getHours() === 0 && d.getMinutes() === 0) return ''
+    return d.toTimeString().slice(0, 5)
+  })
+  const [includeTime, setIncludeTime] = useState(() => {
+    if (!project.due_date) return false
+    const d = new Date(project.due_date)
+    return !(d.getHours() === 0 && d.getMinutes() === 0)
   })
 
   const handleSave = () => {
+    let dueDateISO: string | undefined
+    if (dueDate) {
+      if (includeTime && dueTime) {
+        dueDateISO = new Date(`${dueDate}T${dueTime}`).toISOString()
+      } else {
+        dueDateISO = new Date(`${dueDate}T00:00:00`).toISOString()
+      }
+    }
     onSave({
       name: name.trim() || project.name,
       color,
-      due_date: dueDate ? new Date(dueDate).toISOString() : undefined,
+      due_date: dueDateISO,
     })
   }
 
@@ -802,7 +866,7 @@ function EditProjectModal({
             </label>
             <div className="flex gap-2">
               <input
-                type="datetime-local"
+                type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
                 className="flex-1 px-3 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
@@ -810,7 +874,7 @@ function EditProjectModal({
               {dueDate && (
                 <button
                   type="button"
-                  onClick={() => setDueDate('')}
+                  onClick={() => { setDueDate(''); setDueTime(''); setIncludeTime(false) }}
                   className="px-3 py-2 text-gray-500 hover:text-red-500 border border-gray-200 dark:border-gray-600 rounded-lg"
                   title="Clear due date"
                 >
@@ -818,6 +882,30 @@ function EditProjectModal({
                 </button>
               )}
             </div>
+            {dueDate && (
+              <div className="mt-2">
+                <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                  <input
+                    type="checkbox"
+                    checked={includeTime}
+                    onChange={(e) => {
+                      setIncludeTime(e.target.checked)
+                      if (!e.target.checked) setDueTime('')
+                    }}
+                    className="rounded"
+                  />
+                  Include time
+                </label>
+                {includeTime && (
+                  <input
+                    type="time"
+                    value={dueTime}
+                    onChange={(e) => setDueTime(e.target.value)}
+                    className="mt-2 w-full px-3 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                  />
+                )}
+              </div>
+            )}
           </div>
         </div>
 
