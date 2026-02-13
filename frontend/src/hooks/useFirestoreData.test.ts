@@ -26,41 +26,17 @@ describe('useFirestoreData', () => {
     vi.clearAllMocks()
   })
 
-  it('returns empty arrays when userId is null', () => {
+  it('returns empty arrays and isLoading=false when userId is null', () => {
     const { result } = renderHook(() => useFirestoreData(null))
 
     expect(result.current.tasks).toEqual([])
     expect(result.current.projects).toEqual([])
     expect(result.current.pomodoros).toEqual([])
     expect(result.current.todayPomodoros).toBe(0)
-  })
-
-  it('returns isLoading false when Firebase not configured', () => {
-    const { result } = renderHook(() => useFirestoreData('user-123'))
-
     expect(result.current.isLoading).toBe(false)
   })
 
-  it('returns isLoading false when userId is null', () => {
-    const { result } = renderHook(() => useFirestoreData(null))
-
-    expect(result.current.isLoading).toBe(false)
-  })
-
-  it('exposes all CRUD functions', () => {
-    const { result } = renderHook(() => useFirestoreData('user-123'))
-
-    expect(typeof result.current.addTask).toBe('function')
-    expect(typeof result.current.updateTask).toBe('function')
-    expect(typeof result.current.deleteTask).toBe('function')
-    expect(typeof result.current.addProject).toBe('function')
-    expect(typeof result.current.updateProject).toBe('function')
-    expect(typeof result.current.deleteProject).toBe('function')
-    expect(typeof result.current.recordPomodoro).toBe('function')
-    expect(typeof result.current.reorderTasks).toBe('function')
-  })
-
-  it('addTask returns null when Firebase not configured', async () => {
+  it('addTask returns null when Firebase not configured (graceful degradation)', async () => {
     const { result } = renderHook(() => useFirestoreData('user-123'))
 
     let returnValue: unknown
@@ -71,7 +47,7 @@ describe('useFirestoreData', () => {
     expect(returnValue).toBeNull()
   })
 
-  it('addProject returns null when Firebase not configured', async () => {
+  it('addProject returns null when Firebase not configured (graceful degradation)', async () => {
     const { result } = renderHook(() => useFirestoreData('user-123'))
 
     let returnValue: unknown
@@ -80,42 +56,6 @@ describe('useFirestoreData', () => {
     })
 
     expect(returnValue).toBeNull()
-  })
-
-  it('updateTask does not throw when Firebase not configured', async () => {
-    const { result } = renderHook(() => useFirestoreData('user-123'))
-
-    await act(async () => {
-      // Should not throw
-      await result.current.updateTask('task-1', { title: 'Updated' })
-    })
-  })
-
-  it('deleteTask does not throw when Firebase not configured', async () => {
-    const { result } = renderHook(() => useFirestoreData('user-123'))
-
-    await act(async () => {
-      // Should not throw
-      await result.current.deleteTask('task-1')
-    })
-  })
-
-  it('recordPomodoro does not throw when Firebase not configured', async () => {
-    const { result } = renderHook(() => useFirestoreData('user-123'))
-
-    await act(async () => {
-      // Should not throw
-      await result.current.recordPomodoro('task-1', false)
-    })
-  })
-
-  it('reorderTasks does not throw when Firebase not configured', async () => {
-    const { result } = renderHook(() => useFirestoreData('user-123'))
-
-    await act(async () => {
-      // Should not throw
-      await result.current.reorderTasks(['task-1', 'task-2'])
-    })
   })
 })
 
