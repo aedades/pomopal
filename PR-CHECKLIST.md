@@ -23,7 +23,7 @@ Follow this for every feature/fix:
 - [ ] Push to trigger CI/CD
 
 ## PR Policy
-- [ ] Create PR with clear description
+- [ ] Create PR as bot: `GH_TOKEN=$(cat ~/.openclaw/.env.github) gh pr create ...`
 - [ ] **Wait for Amanda to approve/merge** — do NOT self-merge
 
 ---
