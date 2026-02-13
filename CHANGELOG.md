@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.5](https://github.com/aedades/pomopal/compare/v1.1.4...v1.1.5) (2026-02-13)
+
+
+### Bug Fixes
+
+* run merge on every sign-in, not just first time ever ([#27](https://github.com/aedades/pomopal/issues/27)) ([e068c9f](https://github.com/aedades/pomopal/commit/e068c9ff1fcd5428c50c6dbce9108c5331feb774))
+
 ## [1.1.4](https://github.com/aedades/pomopal/compare/v1.1.3...v1.1.4) (2026-02-13)
 
 
