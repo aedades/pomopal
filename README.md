@@ -101,13 +101,23 @@ firebase deploy --only functions
 
 ## Deployment
 
-### Auto-Deploy (Recommended)
+### Environments
 
-Push to `main` triggers automatic deployment via GitHub Actions:
-1. CI runs tests
-2. On success, deploys to Firebase Hosting
+| Environment | URL | Trigger |
+|-------------|-----|---------|
+| **Production** | https://pomopal-f14e0.web.app | Manual `firebase deploy` |
+| **Staging** | `pomopal-f14e0--staging-*.web.app` | Push to `main` |
+| **PR Preview** | `pomopal-f14e0--pr123-*.web.app` | PR opened |
 
-### Manual Deploy
+Preview/staging channels expire after 7 days.
+
+### Auto-Deploy
+
+- **PRs** → Preview URL posted as comment on PR
+- **Merge to main** → Deploys to staging channel
+- **Production** → Manual deploy (see below)
+
+### Manual Deploy to Production
 
 ```bash
 cd frontend
