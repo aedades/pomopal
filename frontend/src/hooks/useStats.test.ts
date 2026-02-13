@@ -210,6 +210,22 @@ describe('useStats - pomodoros without taskId', () => {
     expect(noProjectEntry).toBeDefined()
     expect(noProjectEntry?.pomodoros).toBe(2)
   })
+  
+  it('calculates actual minutes in project breakdown (not assumed 25min)', () => {
+    // Flow mode pomodoros with varying durations
+    const pomodoros: GuestPomodoro[] = [
+      { id: '1', durationMinutes: 45, startedAt: today, completedAt: today, interrupted: false },
+      { id: '2', durationMinutes: 60, startedAt: today, completedAt: today, interrupted: false },
+      { id: '3', durationMinutes: 30, startedAt: today, completedAt: today, interrupted: false },
+    ]
+    
+    const { result } = renderHook(() => useStats(pomodoros, [], []))
+    
+    const noProjectEntry = result.current.byProject.find(p => p.projectName === 'No Project')
+    expect(noProjectEntry).toBeDefined()
+    expect(noProjectEntry?.pomodoros).toBe(3)
+    expect(noProjectEntry?.minutes).toBe(135) // 45 + 60 + 30, not 75 (3 * 25)
+  })
 })
 
 describe('useStats - reactivity', () => {

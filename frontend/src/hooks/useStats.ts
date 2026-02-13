@@ -265,8 +265,8 @@ export function useStats(
       })
     }
     
-    // By project
-    const projectMap = new Map<string, number>()
+    // By project - track both count and actual minutes
+    const projectMap = new Map<string, { count: number; minutes: number }>()
     for (const p of pomodoros) {
       if (p.interrupted) continue
       // Handle pomodoros without taskId - group as 'none'
@@ -275,18 +275,21 @@ export function useStats(
         const task = tasks.find(t => t.id === p.taskId)
         projectId = task?.projectId || 'none'
       }
-      projectMap.set(projectId, (projectMap.get(projectId) || 0) + 1)
+      const existing = projectMap.get(projectId) || { count: 0, minutes: 0 }
+      existing.count++
+      existing.minutes += p.durationMinutes
+      projectMap.set(projectId, existing)
     }
     
     const byProject: ProjectStats[] = Array.from(projectMap.entries())
-      .map(([projectId, count]) => {
+      .map(([projectId, { count, minutes }]) => {
         const project = projects.find(p => p.id === projectId)
         return {
           projectId,
           projectName: project?.name || 'No Project',
           color: project?.color || '#9ca3af',
           pomodoros: count,
-          minutes: count * 25, // Assume standard duration
+          minutes,
         }
       })
       .sort((a, b) => b.pomodoros - a.pomodoros)
