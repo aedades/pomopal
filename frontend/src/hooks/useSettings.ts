@@ -17,6 +17,7 @@ export interface Settings {
   move_completed_to_bottom: boolean // Auto-move completed tasks to bottom
   dated_tasks_first: boolean // Show tasks with due dates before undated tasks
   exclude_weekends_from_streak: boolean // Don't break streak for missing Sat/Sun
+  show_completed_projects: boolean // Show completed projects in Manage Projects modal
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -34,6 +35,7 @@ const DEFAULT_SETTINGS: Settings = {
   move_completed_to_bottom: true,
   dated_tasks_first: true,
   exclude_weekends_from_streak: false,
+  show_completed_projects: false,
 }
 
 const STORAGE_KEY = 'pomodoro:settings'

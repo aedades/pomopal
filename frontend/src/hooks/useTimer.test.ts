@@ -25,7 +25,8 @@ describe('useTimer', () => {
     flow_mode_enabled: false,
     move_completed_to_bottom: true,
     dated_tasks_first: true,
-  exclude_weekends_from_streak: false,
+    exclude_weekends_from_streak: false,
+    show_completed_projects: false,
   };
 
   describe('Countdown Mode (default)', () => {

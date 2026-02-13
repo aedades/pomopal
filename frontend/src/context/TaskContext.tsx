@@ -20,6 +20,7 @@ interface Project {
   name: string
   color: string
   completed: boolean
+  completedAt?: string
   due_date?: string
 }
 

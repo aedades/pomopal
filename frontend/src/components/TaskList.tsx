@@ -61,12 +61,15 @@ export default function TaskList() {
     updateProject,
     deleteProjectWithTasks,
   } = useTaskContext()
-  const { settings } = useSettings()
+  const { settings, updateSettings } = useSettings()
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null)
   
   const [newTask, setNewTask] = useState('')
   const [selectedProject, setSelectedProject] = useState<string>('')  // Used for both filter AND new task assignment
   const [showProjectInput, setShowProjectInput] = useState(false)
+  
+  // Active (non-completed) projects for add/edit dropdowns
+  const activeProjects = projects.filter(p => !p.completed)
   const [newProjectName, setNewProjectName] = useState('')
   const [showManageProjects, setShowManageProjects] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
@@ -76,7 +79,9 @@ export default function TaskList() {
   const handleAddTask = () => {
     if (!newTask.trim()) return
     // 'none' or '' means no project assignment
-    const projectId = (selectedProject && selectedProject !== 'none') ? selectedProject : undefined
+    // Don't assign to completed projects
+    const selectedIsActive = activeProjects.some(p => p.id === selectedProject)
+    const projectId = (selectedProject && selectedProject !== 'none' && selectedIsActive) ? selectedProject : undefined
     addTask(newTask.trim(), projectId, 1)
     setNewTask('')
   }
@@ -305,10 +310,14 @@ export default function TaskList() {
           onAddProject={handleAddProject}
           onEditProject={(p) => setEditingProject(p)}
           onDeleteProject={(id, name) => setProjectToDelete({ id, name })}
+          onCompleteProject={(id) => updateProject(id, { completed: true, completedAt: new Date().toISOString() })}
+          onUncompleteProject={(id) => updateProject(id, { completed: false, completedAt: undefined })}
           showProjectInput={showProjectInput}
           setShowProjectInput={setShowProjectInput}
           newProjectName={newProjectName}
           setNewProjectName={setNewProjectName}
+          showCompleted={settings.show_completed_projects}
+          onToggleShowCompleted={() => updateSettings({ show_completed_projects: !settings.show_completed_projects })}
         />
       )}
 
@@ -326,7 +335,7 @@ export default function TaskList() {
       {editingTask && (
         <EditTaskModal
           task={editingTask}
-          projects={projects}
+          projects={activeProjects}
           onSave={(updates) => {
             updateTask(editingTask.id, updates)
             setEditingTask(null)
@@ -481,24 +490,35 @@ function ManageProjectsModal({
   onAddProject,
   onEditProject,
   onDeleteProject,
+  onCompleteProject,
+  onUncompleteProject,
   showProjectInput,
   setShowProjectInput,
   newProjectName,
   setNewProjectName,
+  showCompleted,
+  onToggleShowCompleted,
 }: {
-  projects: { id: string; name: string; color: string; due_date?: string }[]
+  projects: { id: string; name: string; color: string; due_date?: string; completed?: boolean }[]
   onClose: () => void
   onAddProject: () => void
   onEditProject: (project: { id: string; name: string; color: string; due_date?: string }) => void
   onDeleteProject: (id: string, name: string) => void
+  onCompleteProject: (id: string) => void
+  onUncompleteProject: (id: string) => void
   showProjectInput: boolean
   setShowProjectInput: (v: boolean) => void
   newProjectName: string
   setNewProjectName: (v: string) => void
+  showCompleted: boolean
+  onToggleShowCompleted: () => void
 }) {
+  const activeProjects = projects.filter(p => !p.completed)
+  const completedProjects = projects.filter(p => p.completed)
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-gray-800 dark:text-white">Manage Projects</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700 dark:text-gray-400">
@@ -506,11 +526,12 @@ function ManageProjectsModal({
           </button>
         </div>
 
-        {projects.length === 0 ? (
-          <p className="text-gray-500 dark:text-gray-400 text-center py-4">No projects yet</p>
+        {/* Active Projects */}
+        {activeProjects.length === 0 ? (
+          <p className="text-gray-500 dark:text-gray-400 text-center py-4">No active projects</p>
         ) : (
           <ul className="space-y-2 mb-4">
-            {projects.map((project) => (
+            {activeProjects.map((project) => (
               <li
                 key={project.id}
                 className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
@@ -530,6 +551,13 @@ function ManageProjectsModal({
                   </div>
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
+                  <button
+                    onClick={() => onCompleteProject(project.id)}
+                    className="p-1.5 text-gray-400 hover:text-green-500 transition-colors"
+                    title="Complete project"
+                  >
+                    ✓
+                  </button>
                   <button
                     onClick={() => onEditProject(project)}
                     className="p-1.5 text-gray-400 hover:text-blue-500 transition-colors"
@@ -582,6 +610,57 @@ function ManageProjectsModal({
             >
               Cancel
             </button>
+          </div>
+        )}
+
+        {/* Completed Projects Section */}
+        {completedProjects.length > 0 && (
+          <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-600">
+            <button
+              onClick={onToggleShowCompleted}
+              className="flex items-center justify-between w-full text-left text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+            >
+              <span className="text-sm font-medium">
+                Completed Projects ({completedProjects.length})
+              </span>
+              <span className="text-xs">{showCompleted ? '▼' : '▶'}</span>
+            </button>
+            
+            {showCompleted && (
+              <ul className="space-y-2 mt-3">
+                {completedProjects.map((project) => (
+                  <li
+                    key={project.id}
+                    className="flex items-center justify-between p-3 bg-gray-50/50 dark:bg-gray-700/50 rounded-lg opacity-75"
+                  >
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <span
+                        className="w-3 h-3 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: project.color || '#6B7280' }}
+                      />
+                      <span className="text-gray-600 dark:text-gray-400 block truncate line-through">
+                        {project.name}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <button
+                        onClick={() => onUncompleteProject(project.id)}
+                        className="p-1.5 text-gray-400 hover:text-yellow-500 transition-colors"
+                        title="Reopen project"
+                      >
+                        ↩️
+                      </button>
+                      <button
+                        onClick={() => onDeleteProject(project.id, project.name)}
+                        className="px-2 py-1 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
 

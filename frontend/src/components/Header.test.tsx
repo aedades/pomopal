@@ -32,6 +32,7 @@ const defaultSettings: Settings = {
   move_completed_to_bottom: false,
   dated_tasks_first: false,
   exclude_weekends_from_streak: false,
+  show_completed_projects: false,
 }
 
 describe('Header', () => {
