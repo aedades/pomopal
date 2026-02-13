@@ -24,7 +24,7 @@ function HelpTip({ text }: { text: string }) {
         ?
       </button>
       {show && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 text-xs text-white bg-gray-800 dark:bg-gray-900 rounded-lg shadow-lg z-10">
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 max-w-56 w-max p-2 text-xs text-white bg-gray-800 dark:bg-gray-900 rounded-lg shadow-lg z-10 whitespace-normal">
           {text}
           <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-800 dark:border-t-gray-900" />
         </div>
@@ -52,7 +52,7 @@ export default function SettingsModal({ settings, onUpdate, onClose }: SettingsM
           <section>
             <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase mb-3">
               Timer
-              <HelpTip text="Standard Pomodoro: 25 min work, 5 min short break, 15-30 min long break. Adjust to fit your focus style." />
+              <HelpTip text="Classic: 25/5/15 min. Adjust to your style." />
             </h3>
             <div className="grid grid-cols-3 gap-3">
               <div>
@@ -209,7 +209,7 @@ export default function SettingsModal({ settings, onUpdate, onClose }: SettingsM
             <div className="flex items-center justify-between">
               <label className="text-gray-700 dark:text-gray-300">
                 Long break after
-                <HelpTip text="After completing this many pomodoros, you'll get a longer break instead of a short one." />
+                <HelpTip text="Long break after this many pomodoros." />
               </label>
               <div className="flex items-center gap-2">
                 <input
