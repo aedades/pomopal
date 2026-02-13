@@ -112,8 +112,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   }))
 
   const addTask = useCallback((title: string, projectId?: string, estimate = 1, dueDate?: string) => {
+    console.log('[TaskContext] addTask called:', { title, isCloudSync, userId: user?.id })
     dataSource.addTask(title, projectId, estimate, dueDate)
-  }, [dataSource])
+  }, [dataSource, isCloudSync, user?.id])
 
   const updateTask = useCallback((id: string, updates: Partial<Task>) => {
     // Only include properties that were explicitly provided in updates
