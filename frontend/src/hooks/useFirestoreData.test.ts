@@ -228,18 +228,18 @@ describe('useFirestoreData with mocked Firestore', () => {
 describe('clearLocalData', () => {
   beforeEach(() => {
     // Set up localStorage items
-    localStorage.setItem('pomodoro-tasks', JSON.stringify([{ id: '1' }]))
-    localStorage.setItem('pomodoro-projects', JSON.stringify([{ id: '2' }]))
-    localStorage.setItem('pomodoro-stats', JSON.stringify({ count: 5 }))
+    localStorage.setItem('pomodoro:guest:tasks', JSON.stringify([{ id: '1' }]))
+    localStorage.setItem('pomodoro:guest:projects', JSON.stringify([{ id: '2' }]))
+    localStorage.setItem('pomodoro:guest:pomodoros', JSON.stringify({ count: 5 }))
     localStorage.setItem('other-key', 'should-remain')
   })
 
   it('removes correct localStorage keys', () => {
     clearLocalData()
 
-    expect(localStorage.getItem('pomodoro-tasks')).toBeNull()
-    expect(localStorage.getItem('pomodoro-projects')).toBeNull()
-    expect(localStorage.getItem('pomodoro-stats')).toBeNull()
+    expect(localStorage.getItem('pomodoro:guest:tasks')).toBeNull()
+    expect(localStorage.getItem('pomodoro:guest:projects')).toBeNull()
+    expect(localStorage.getItem('pomodoro:guest:pomodoros')).toBeNull()
   })
 
   it('does not remove unrelated localStorage keys', () => {
@@ -278,9 +278,9 @@ describe('saveToLocalStorage', () => {
 
     saveToLocalStorage(data)
 
-    expect(JSON.parse(localStorage.getItem('pomodoro-tasks') || '[]')).toEqual(data.tasks)
-    expect(JSON.parse(localStorage.getItem('pomodoro-projects') || '[]')).toEqual(data.projects)
-    expect(JSON.parse(localStorage.getItem('pomodoro-stats') || '[]')).toEqual(data.pomodoros)
+    expect(JSON.parse(localStorage.getItem('pomodoro:guest:tasks') || '[]')).toEqual(data.tasks)
+    expect(JSON.parse(localStorage.getItem('pomodoro:guest:projects') || '[]')).toEqual(data.projects)
+    expect(JSON.parse(localStorage.getItem('pomodoro:guest:pomodoros') || '[]')).toEqual(data.pomodoros)
   })
 
   it('clears migration flag so data can be re-merged on next sign-in', async () => {
@@ -304,7 +304,7 @@ describe('saveToLocalStorage', () => {
     }))
     const { saveToLocalStorage } = await import('./useFirestoreData')
     
-    localStorage.setItem('pomodoro-tasks', JSON.stringify([{ id: 'old', title: 'Old task' }]))
+    localStorage.setItem('pomodoro:guest:tasks', JSON.stringify([{ id: 'old', title: 'Old task' }]))
 
     const newData = {
       tasks: [{ id: 'new', title: 'New task', completed: false, estimatedPomodoros: 1, actualPomodoros: 0, createdAt: '2024-01-01' }],
@@ -314,7 +314,7 @@ describe('saveToLocalStorage', () => {
 
     saveToLocalStorage(newData)
 
-    const savedTasks = JSON.parse(localStorage.getItem('pomodoro-tasks') || '[]')
+    const savedTasks = JSON.parse(localStorage.getItem('pomodoro:guest:tasks') || '[]')
     expect(savedTasks).toHaveLength(1)
     expect(savedTasks[0].id).toBe('new')
   })

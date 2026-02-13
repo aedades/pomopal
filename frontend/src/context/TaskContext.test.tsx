@@ -402,7 +402,7 @@ describe('TaskContext migration state', () => {
     
     saveToLocalStorage({ tasks, projects: [], pomodoros: [] });
     
-    const saved = JSON.parse(localStorage.getItem('pomodoro-tasks') || '[]');
+    const saved = JSON.parse(localStorage.getItem('pomodoro:guest:tasks') || '[]');
     expect(saved).toHaveLength(2);
     expect(saved[0].title).toBe('Task 1');
     expect(saved[1].title).toBe('Task 2');
