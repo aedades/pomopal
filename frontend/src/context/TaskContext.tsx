@@ -20,6 +20,7 @@ interface Project {
   name: string
   color: string
   completed: boolean
+  due_date?: string
 }
 
 interface TaskContextType {
@@ -104,6 +105,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     name: p.name,
     color: p.color,
     completed: p.completed,
+    due_date: p.dueDate,
   }))
 
   const addTask = useCallback((title: string, projectId?: string, estimate = 1, dueDate?: string) => {
@@ -139,7 +141,12 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   }, [dataSource])
 
   const updateProject = useCallback((id: string, updates: Partial<Project>) => {
-    dataSource.updateProject(id, updates)
+    const guestUpdates: Partial<GuestProject> = {}
+    if ('name' in updates) guestUpdates.name = updates.name
+    if ('color' in updates) guestUpdates.color = updates.color
+    if ('completed' in updates) guestUpdates.completed = updates.completed
+    if ('due_date' in updates) guestUpdates.dueDate = updates.due_date
+    dataSource.updateProject(id, guestUpdates)
   }, [dataSource])
 
   const deleteProject = useCallback((id: string) => {

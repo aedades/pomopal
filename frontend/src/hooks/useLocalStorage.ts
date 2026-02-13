@@ -196,6 +196,7 @@ export interface GuestProject {
   completed: boolean
   completedAt?: string
   createdAt: string
+  dueDate?: string // ISO date string (optional)
 }
 
 export interface GuestPomodoro {

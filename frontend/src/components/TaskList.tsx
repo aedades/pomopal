@@ -58,6 +58,7 @@ export default function TaskList() {
     deleteTask,
     reorderTasks,
     addProject,
+    updateProject,
     deleteProjectWithTasks,
   } = useTaskContext()
   const { settings } = useSettings()
@@ -69,6 +70,7 @@ export default function TaskList() {
   const [newProjectName, setNewProjectName] = useState('')
   const [showManageProjects, setShowManageProjects] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const [editingProject, setEditingProject] = useState<{ id: string; name: string; color: string; due_date?: string } | null>(null)
   const [projectToDelete, setProjectToDelete] = useState<{ id: string; name: string } | null>(null)
 
   const handleAddTask = () => {
@@ -301,6 +303,7 @@ export default function TaskList() {
           projects={projects}
           onClose={() => setShowManageProjects(false)}
           onAddProject={handleAddProject}
+          onEditProject={(p) => setEditingProject(p)}
           onDeleteProject={(id, name) => setProjectToDelete({ id, name })}
           showProjectInput={showProjectInput}
           setShowProjectInput={setShowProjectInput}
@@ -329,6 +332,18 @@ export default function TaskList() {
             setEditingTask(null)
           }}
           onClose={() => setEditingTask(null)}
+        />
+      )}
+
+      {/* Edit Project Modal */}
+      {editingProject && (
+        <EditProjectModal
+          project={editingProject}
+          onSave={(updates) => {
+            updateProject(editingProject.id, updates)
+            setEditingProject(null)
+          }}
+          onClose={() => setEditingProject(null)}
         />
       )}
     </div>
@@ -464,15 +479,17 @@ function ManageProjectsModal({
   projects,
   onClose,
   onAddProject,
+  onEditProject,
   onDeleteProject,
   showProjectInput,
   setShowProjectInput,
   newProjectName,
   setNewProjectName,
 }: {
-  projects: { id: string; name: string; color: string }[]
+  projects: { id: string; name: string; color: string; due_date?: string }[]
   onClose: () => void
   onAddProject: () => void
+  onEditProject: (project: { id: string; name: string; color: string; due_date?: string }) => void
   onDeleteProject: (id: string, name: string) => void
   showProjectInput: boolean
   setShowProjectInput: (v: boolean) => void
@@ -498,19 +515,35 @@ function ManageProjectsModal({
                 key={project.id}
                 className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
               >
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
                   <span
-                    className="w-3 h-3 rounded-full"
+                    className="w-3 h-3 rounded-full flex-shrink-0"
                     style={{ backgroundColor: project.color || '#6B7280' }}
                   />
-                  <span className="text-gray-800 dark:text-gray-200">{project.name}</span>
+                  <div className="min-w-0">
+                    <span className="text-gray-800 dark:text-gray-200 block truncate">{project.name}</span>
+                    {project.due_date && (
+                      <span className="text-xs text-gray-400 dark:text-gray-500">
+                        📅 {formatDueDate(project.due_date)}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <button
-                  onClick={() => onDeleteProject(project.id, project.name)}
-                  className="px-3 py-1 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
-                >
-                  Delete
-                </button>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <button
+                    onClick={() => onEditProject(project)}
+                    className="p-1.5 text-gray-400 hover:text-blue-500 transition-colors"
+                    title="Edit project"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    onClick={() => onDeleteProject(project.id, project.name)}
+                    className="px-2 py-1 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                  >
+                    Delete
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
@@ -668,6 +701,123 @@ function EditTaskModal({
               max="20"
               className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
             />
+          </div>
+        </div>
+
+        <div className="flex gap-2 mt-6">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function EditProjectModal({
+  project,
+  onSave,
+  onClose,
+}: {
+  project: { id: string; name: string; color: string; due_date?: string }
+  onSave: (updates: { name?: string; color?: string; due_date?: string }) => void
+  onClose: () => void
+}) {
+  const [name, setName] = useState(project.name)
+  const [color, setColor] = useState(project.color)
+  const [dueDate, setDueDate] = useState(() => {
+    if (!project.due_date) return ''
+    const d = new Date(project.due_date)
+    return d.toISOString().slice(0, 16)
+  })
+
+  const handleSave = () => {
+    onSave({
+      name: name.trim() || project.name,
+      color,
+      due_date: dueDate ? new Date(dueDate).toISOString() : undefined,
+    })
+  }
+
+  const colorOptions = [
+    '#ef4444', '#f97316', '#eab308', '#22c55e', '#14b8a6',
+    '#3b82f6', '#8b5cf6', '#ec4899', '#6b7280',
+  ]
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-white">Edit Project</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 dark:text-gray-400">
+            ✕
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Project Name
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Color
+            </label>
+            <div className="flex gap-2 flex-wrap">
+              {colorOptions.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setColor(c)}
+                  className={`w-8 h-8 rounded-full border-2 transition-all ${
+                    color === c ? 'border-gray-800 dark:border-white scale-110' : 'border-transparent'
+                  }`}
+                  style={{ backgroundColor: c }}
+                  title={c}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Due Date (optional)
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="datetime-local"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                className="flex-1 px-3 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+              />
+              {dueDate && (
+                <button
+                  type="button"
+                  onClick={() => setDueDate('')}
+                  className="px-3 py-2 text-gray-500 hover:text-red-500 border border-gray-200 dark:border-gray-600 rounded-lg"
+                  title="Clear due date"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
