@@ -11,6 +11,7 @@ export interface Settings {
   long_break_minutes: number
   long_break_interval: number
   flow_mode_enabled: boolean // Count up instead of down, no alerts
+  move_completed_to_bottom: boolean // Auto-move completed tasks to bottom
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -24,6 +25,7 @@ const DEFAULT_SETTINGS: Settings = {
   long_break_minutes: 15,
   long_break_interval: 4,
   flow_mode_enabled: false,
+  move_completed_to_bottom: true,
 }
 
 const STORAGE_KEY = 'pomodoro:settings'

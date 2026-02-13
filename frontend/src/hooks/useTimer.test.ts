@@ -22,6 +22,7 @@ describe('useTimer', () => {
     dark_mode: false,
     daily_pomodoro_goal: 8,
     flow_mode_enabled: false,
+    move_completed_to_bottom: true,
   };
 
   describe('Countdown Mode (default)', () => {

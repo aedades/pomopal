@@ -21,13 +21,16 @@ export function useNotifications() {
 
   useEffect(() => {
     const checkSupport = async () => {
-      // Check if notifications are supported
-      const supported = 'Notification' in window && 'serviceWorker' in navigator;
+      // Check if notifications are supported (ensure Notification exists and is truthy)
+      const notificationExists = typeof window !== 'undefined' && 
+        'Notification' in window && 
+        window.Notification !== undefined;
+      const supported = notificationExists && 'serviceWorker' in navigator;
       
       setState((prev) => ({
         ...prev,
         supported,
-        permission: supported ? Notification.permission : 'denied',
+        permission: supported && notificationExists ? Notification.permission : 'denied',
         loading: false,
       }));
     };

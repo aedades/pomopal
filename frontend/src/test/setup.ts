@@ -44,10 +44,21 @@ Object.defineProperty(window, 'matchMedia', {
 // Mock Notification API
 Object.defineProperty(window, 'Notification', {
   writable: true,
+  configurable: true,
   value: class MockNotification {
-    static permission = 'default';
+    static permission: NotificationPermission = 'default';
     static requestPermission = vi.fn().mockResolvedValue('granted');
     constructor() {}
+  },
+});
+
+// Mock ServiceWorker (needed for notification support check)
+Object.defineProperty(navigator, 'serviceWorker', {
+  writable: true,
+  configurable: true,
+  value: {
+    register: vi.fn().mockResolvedValue({}),
+    ready: Promise.resolve({}),
   },
 });
 

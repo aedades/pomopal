@@ -18,6 +18,7 @@ describe('useSettings', () => {
     short_break_minutes: 5,
     long_break_minutes: 15,
     long_break_interval: 4,
+    move_completed_to_bottom: true,
   };
 
   it('returns default settings when localStorage is empty', () => {

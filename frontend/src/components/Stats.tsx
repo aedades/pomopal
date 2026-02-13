@@ -1,4 +1,4 @@
-import { Stats as StatsType, DailyStats, ProjectStats, formatDuration } from '../hooks/useStats'
+import { Stats as StatsType, DailyStats, ProjectStats, ProductivityInsight, formatDuration } from '../hooks/useStats'
 
 interface StatsProps {
   stats: StatsType
@@ -125,6 +125,69 @@ function StreakDisplay({ current, longest }: { current: number; longest: number 
   )
 }
 
+function ProductivityInsights({ insights }: { insights: ProductivityInsight }) {
+  if (!insights.mostProductiveDay && !insights.mostProductiveHour) {
+    return null // No data yet
+  }
+  
+  const dayNames = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+  const maxDay = Math.max(...insights.byDayOfWeek, 1)
+  
+  return (
+    <div className="bg-white/20 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl p-4">
+      <h3 className="text-white dark:text-gray-200 font-medium mb-3">🧠 Productivity Insights</h3>
+      
+      {/* Peak times */}
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        {insights.mostProductiveDay && (
+          <div className="text-center">
+            <div className="text-sm text-white/60 dark:text-gray-500">Best Day</div>
+            <div className="text-lg font-semibold text-white dark:text-gray-100">
+              {insights.mostProductiveDay}
+            </div>
+            <div className="text-xs text-white/50 dark:text-gray-500">
+              {insights.peakDayCount} pomodoros
+            </div>
+          </div>
+        )}
+        {insights.mostProductiveHour && (
+          <div className="text-center">
+            <div className="text-sm text-white/60 dark:text-gray-500">Best Hour</div>
+            <div className="text-lg font-semibold text-white dark:text-gray-100">
+              {insights.mostProductiveHour}
+            </div>
+            <div className="text-xs text-white/50 dark:text-gray-500">
+              {insights.peakHourCount} pomodoros
+            </div>
+          </div>
+        )}
+      </div>
+      
+      {/* Day of week breakdown */}
+      <div className="mt-3">
+        <div className="text-xs text-white/60 dark:text-gray-500 mb-2">By Day of Week</div>
+        <div className="flex items-end justify-between h-12 gap-1">
+          {insights.byDayOfWeek.map((count, i) => {
+            const height = (count / maxDay) * 100
+            return (
+              <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
+                <div className="w-full flex-1 flex items-end">
+                  <div
+                    className="w-full rounded-t bg-white/60 dark:bg-gray-600"
+                    style={{ height: `${Math.max(height, count > 0 ? 10 : 0)}%` }}
+                    title={`${count} pomodoros`}
+                  />
+                </div>
+                <span className="text-xs text-white/60 dark:text-gray-500">{dayNames[i]}</span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function Stats({ stats }: StatsProps) {
   return (
     <div className="space-y-4">
@@ -147,6 +210,9 @@ export default function Stats({ stats }: StatsProps) {
       
       {/* Streaks */}
       <StreakDisplay current={stats.currentStreak} longest={stats.longestStreak} />
+      
+      {/* Productivity Insights */}
+      <ProductivityInsights insights={stats.insights} />
       
       {/* Averages */}
       <div className="grid grid-cols-2 gap-4">

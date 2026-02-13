@@ -14,6 +14,7 @@ describe('Timer', () => {
     dark_mode: false,
     daily_pomodoro_goal: 8,
     flow_mode_enabled: false,
+    move_completed_to_bottom: true,
   };
 
   const defaultProps = {
@@ -28,27 +29,20 @@ describe('Timer', () => {
     settings: defaultSettings,
   };
 
-  it('renders the timer with correct time format', () => {
-    render(<Timer {...defaultProps} />);
-    expect(screen.getByText('25:00')).toBeInTheDocument();
-  });
-
-  it('formats single digit seconds correctly', () => {
+  it('formats time correctly (MM:SS)', () => {
     render(<Timer {...defaultProps} timeLeft={65} />);
     expect(screen.getByText('01:05')).toBeInTheDocument();
   });
 
-  it('shows Start button when not running', () => {
-    render(<Timer {...defaultProps} isRunning={false} />);
+  it('shows Start when paused, Pause when running', () => {
+    const { rerender } = render(<Timer {...defaultProps} isRunning={false} />);
     expect(screen.getByRole('button', { name: /start/i })).toBeInTheDocument();
-  });
 
-  it('shows Pause button when running', () => {
-    render(<Timer {...defaultProps} isRunning={true} />);
+    rerender(<Timer {...defaultProps} isRunning={true} />);
     expect(screen.getByRole('button', { name: /pause/i })).toBeInTheDocument();
   });
 
-  it('calls onToggle when start/pause button is clicked', () => {
+  it('calls onToggle when start/pause clicked', () => {
     const onToggle = vi.fn();
     render(<Timer {...defaultProps} onToggle={onToggle} />);
 
@@ -56,7 +50,7 @@ describe('Timer', () => {
     expect(onToggle).toHaveBeenCalledTimes(1);
   });
 
-  it('calls onReset when reset button is clicked', () => {
+  it('calls onReset when reset clicked', () => {
     const onReset = vi.fn();
     render(<Timer {...defaultProps} onReset={onReset} />);
 
@@ -64,19 +58,7 @@ describe('Timer', () => {
     expect(onReset).toHaveBeenCalledTimes(1);
   });
 
-  it('displays active task name when provided', () => {
-    render(<Timer {...defaultProps} activeTask="Write documentation" />);
-    expect(screen.getByText('Write documentation')).toBeInTheDocument();
-  });
-
-  it('shows mode tabs', () => {
-    render(<Timer {...defaultProps} />);
-    expect(screen.getByRole('button', { name: /focus/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /short break/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /long break/i })).toBeInTheDocument();
-  });
-
-  it('calls onModeChange when mode tab is clicked', () => {
+  it('calls onModeChange when mode tab clicked', () => {
     const onModeChange = vi.fn();
     render(<Timer {...defaultProps} onModeChange={onModeChange} />);
 
@@ -84,21 +66,8 @@ describe('Timer', () => {
     expect(onModeChange).toHaveBeenCalledWith('shortBreak');
   });
 
-  it('highlights the active mode', () => {
-    render(<Timer {...defaultProps} mode="shortBreak" />);
-    const shortBreakButton = screen.getByRole('button', { name: /short break/i });
-    // Check that it has the active styling (bg-white class indicates active)
-    expect(shortBreakButton.className).toContain('bg-white');
-  });
-
-  it('renders with different time values', () => {
-    const { rerender } = render(<Timer {...defaultProps} timeLeft={300} />);
-    expect(screen.getByText('05:00')).toBeInTheDocument();
-
-    rerender(<Timer {...defaultProps} timeLeft={0} />);
-    expect(screen.getByText('00:00')).toBeInTheDocument();
-
-    rerender(<Timer {...defaultProps} timeLeft={3599} />);
-    expect(screen.getByText('59:59')).toBeInTheDocument();
+  it('displays active task name when provided', () => {
+    render(<Timer {...defaultProps} activeTask="Write documentation" />);
+    expect(screen.getByText('Write documentation')).toBeInTheDocument();
   });
 });

@@ -111,6 +111,11 @@ export default function SettingsModal({ settings, onUpdate, onClose }: SettingsM
                 checked={settings.dark_mode}
                 onChange={(v) => onUpdate({ dark_mode: v })}
               />
+              <Toggle
+                label="Move completed tasks to bottom"
+                checked={settings.move_completed_to_bottom}
+                onChange={(v) => onUpdate({ move_completed_to_bottom: v })}
+              />
             </div>
           </section>
 

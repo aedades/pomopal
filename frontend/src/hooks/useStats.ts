@@ -16,6 +16,15 @@ export interface ProjectStats {
   minutes: number
 }
 
+export interface ProductivityInsight {
+  mostProductiveDay: string | null // e.g., "Monday"
+  mostProductiveHour: string | null // e.g., "10 AM"
+  peakDayCount: number
+  peakHourCount: number
+  byDayOfWeek: number[] // [Sun, Mon, Tue, Wed, Thu, Fri, Sat]
+  byHourOfDay: number[] // [0-23]
+}
+
 export interface Stats {
   // Totals
   totalPomodoros: number
@@ -41,6 +50,9 @@ export interface Stats {
   
   // Task accuracy
   estimateAccuracy: number // ratio of actual/estimated for completed tasks
+  
+  // Productivity insights
+  insights: ProductivityInsight
 }
 
 function getDateString(date: Date): string {
@@ -220,6 +232,42 @@ export function useStats(
         : 100
     }
     
+    // Productivity insights: by day of week and hour of day
+    const byDayOfWeek = [0, 0, 0, 0, 0, 0, 0] // Sun-Sat
+    const byHourOfDay = Array(24).fill(0) // 0-23
+    
+    for (const p of pomodoros) {
+      if (p.interrupted) continue
+      const date = new Date(p.completedAt)
+      byDayOfWeek[date.getDay()]++
+      byHourOfDay[date.getHours()]++
+    }
+    
+    // Find peak day
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    const peakDayCount = Math.max(...byDayOfWeek)
+    const peakDayIndex = byDayOfWeek.indexOf(peakDayCount)
+    const mostProductiveDay = peakDayCount > 0 ? dayNames[peakDayIndex] : null
+    
+    // Find peak hour
+    const peakHourCount = Math.max(...byHourOfDay)
+    const peakHourIndex = byHourOfDay.indexOf(peakHourCount)
+    const formatHour = (h: number) => {
+      if (h === 0) return '12 AM'
+      if (h === 12) return '12 PM'
+      return h < 12 ? `${h} AM` : `${h - 12} PM`
+    }
+    const mostProductiveHour = peakHourCount > 0 ? formatHour(peakHourIndex) : null
+    
+    const insights: ProductivityInsight = {
+      mostProductiveDay,
+      mostProductiveHour,
+      peakDayCount,
+      peakHourCount,
+      byDayOfWeek,
+      byHourOfDay,
+    }
+    
     return {
       totalPomodoros,
       totalMinutes,
@@ -234,6 +282,7 @@ export function useStats(
       thisMonth,
       byProject,
       estimateAccuracy,
+      insights,
     }
   }, [pomodoros, tasks, projects])
 }

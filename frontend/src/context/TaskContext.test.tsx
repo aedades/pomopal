@@ -1,6 +1,16 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { TaskProvider, useTaskContext } from './TaskContext';
+import { useTaskContext, TaskProvider } from './TaskContext';
+import { AuthProvider } from './AuthContext';
+
+// Wrapper that provides both Auth and Task context
+function TestWrapper({ children }: { children: React.ReactNode }) {
+  return (
+    <AuthProvider>
+      <TaskProvider>{children}</TaskProvider>
+    </AuthProvider>
+  );
+}
 
 // Test component that uses the context
 function TestComponent() {
@@ -15,6 +25,7 @@ function TestComponent() {
     setActiveTask,
     addProject,
     deleteProject,
+    deleteProjectWithTasks,
   } = useTaskContext();
 
   return (
@@ -35,9 +46,13 @@ function TestComponent() {
       {tasks.map((task) => (
         <div key={task.id} data-testid={`task-${task.id}`}>
           <span>{task.title}</span>
+          <span data-testid={`task-project-${task.id}`}>{task.project_id || 'no-project'}</span>
           <button onClick={() => setActiveTask(task)}>Select</button>
           <button onClick={() => updateTask(task.id, { completed: true })}>
             Complete
+          </button>
+          <button onClick={() => updateTask(task.id, { project_id: undefined })}>
+            Remove Project
           </button>
           <button onClick={() => deleteTask(task.id)}>Delete</button>
         </div>
@@ -48,6 +63,9 @@ function TestComponent() {
           <span>{project.name}</span>
           <button onClick={() => deleteProject(project.id)}>
             Delete Project
+          </button>
+          <button onClick={() => deleteProjectWithTasks(project.id)}>
+            Delete Project With Tasks
           </button>
         </div>
       ))}
@@ -62,9 +80,9 @@ describe('TaskContext', () => {
 
   it('provides initial empty state', () => {
     render(
-      <TaskProvider>
+      <TestWrapper>
         <TestComponent />
-      </TaskProvider>
+      </TestWrapper>
     );
 
     expect(screen.getByTestId('task-count')).toHaveTextContent('0');
@@ -75,9 +93,9 @@ describe('TaskContext', () => {
 
   it('adds a task', () => {
     render(
-      <TaskProvider>
+      <TestWrapper>
         <TestComponent />
-      </TaskProvider>
+      </TestWrapper>
     );
 
     fireEvent.click(screen.getByText('Add Task'));
@@ -88,9 +106,9 @@ describe('TaskContext', () => {
 
   it('deletes a task', () => {
     render(
-      <TaskProvider>
+      <TestWrapper>
         <TestComponent />
-      </TaskProvider>
+      </TestWrapper>
     );
 
     fireEvent.click(screen.getByText('Add Task'));
@@ -102,9 +120,9 @@ describe('TaskContext', () => {
 
   it('completes a task', () => {
     render(
-      <TaskProvider>
+      <TestWrapper>
         <TestComponent />
-      </TaskProvider>
+      </TestWrapper>
     );
 
     fireEvent.click(screen.getByText('Add Task'));
@@ -116,9 +134,9 @@ describe('TaskContext', () => {
 
   it('sets active task', () => {
     render(
-      <TaskProvider>
+      <TestWrapper>
         <TestComponent />
-      </TaskProvider>
+      </TestWrapper>
     );
 
     fireEvent.click(screen.getByText('Add Task'));
@@ -129,9 +147,9 @@ describe('TaskContext', () => {
 
   it('adds a project', () => {
     render(
-      <TaskProvider>
+      <TestWrapper>
         <TestComponent />
-      </TaskProvider>
+      </TestWrapper>
     );
 
     fireEvent.click(screen.getByText('Add Project'));
@@ -142,9 +160,9 @@ describe('TaskContext', () => {
 
   it('deletes a project', () => {
     render(
-      <TaskProvider>
+      <TestWrapper>
         <TestComponent />
-      </TaskProvider>
+      </TestWrapper>
     );
 
     fireEvent.click(screen.getByText('Add Project'));
@@ -156,9 +174,9 @@ describe('TaskContext', () => {
 
   it('adds task to project', () => {
     render(
-      <TaskProvider>
+      <TestWrapper>
         <TestComponent />
-      </TaskProvider>
+      </TestWrapper>
     );
 
     // First add a project
@@ -172,9 +190,9 @@ describe('TaskContext', () => {
 
   it('persists tasks to localStorage', () => {
     const { unmount } = render(
-      <TaskProvider>
+      <TestWrapper>
         <TestComponent />
-      </TaskProvider>
+      </TestWrapper>
     );
 
     fireEvent.click(screen.getByText('Add Task'));
@@ -182,9 +200,9 @@ describe('TaskContext', () => {
 
     // Render again and check persistence
     render(
-      <TaskProvider>
+      <TestWrapper>
         <TestComponent />
-      </TaskProvider>
+      </TestWrapper>
     );
 
     expect(screen.getByTestId('task-count')).toHaveTextContent('1');
@@ -192,18 +210,18 @@ describe('TaskContext', () => {
 
   it('persists projects to localStorage', () => {
     const { unmount } = render(
-      <TaskProvider>
+      <TestWrapper>
         <TestComponent />
-      </TaskProvider>
+      </TestWrapper>
     );
 
     fireEvent.click(screen.getByText('Add Project'));
     unmount();
 
     render(
-      <TaskProvider>
+      <TestWrapper>
         <TestComponent />
-      </TaskProvider>
+      </TestWrapper>
     );
 
     expect(screen.getByTestId('project-count')).toHaveTextContent('1');
@@ -211,9 +229,9 @@ describe('TaskContext', () => {
 
   it('clears active task when task is deleted', () => {
     render(
-      <TaskProvider>
+      <TestWrapper>
         <TestComponent />
-      </TaskProvider>
+      </TestWrapper>
     );
 
     fireEvent.click(screen.getByText('Add Task'));
@@ -222,5 +240,88 @@ describe('TaskContext', () => {
 
     fireEvent.click(screen.getByText('Delete'));
     expect(screen.getByTestId('active-task')).toHaveTextContent('none');
+  });
+
+  it('deletes project and all associated tasks', () => {
+    render(
+      <TestWrapper>
+        <TestComponent />
+      </TestWrapper>
+    );
+
+    // Add a project
+    fireEvent.click(screen.getByText('Add Project'));
+    expect(screen.getByTestId('project-count')).toHaveTextContent('1');
+
+    // Add a task to that project
+    fireEvent.click(screen.getByText('Add Task to Project'));
+    expect(screen.getByTestId('task-count')).toHaveTextContent('1');
+
+    // Delete project with tasks
+    fireEvent.click(screen.getByText('Delete Project With Tasks'));
+
+    // Both project and task should be gone
+    expect(screen.getByTestId('project-count')).toHaveTextContent('0');
+    expect(screen.getByTestId('task-count')).toHaveTextContent('0');
+  });
+
+  it('updates task fields', () => {
+    render(
+      <TestWrapper>
+        <TestComponent />
+      </TestWrapper>
+    );
+
+    fireEvent.click(screen.getByText('Add Task'));
+    expect(screen.getByText('New Task')).toBeInTheDocument();
+
+    // The Complete button calls updateTask with completed: true
+    fireEvent.click(screen.getByText('Complete'));
+    
+    // Task still exists (just completed)
+    expect(screen.getByTestId('task-count')).toHaveTextContent('1');
+  });
+
+  it('preserves task title when completing (partial update bug)', () => {
+    render(
+      <TestWrapper>
+        <TestComponent />
+      </TestWrapper>
+    );
+
+    // Add a task
+    fireEvent.click(screen.getByText('Add Task'));
+    expect(screen.getByText('New Task')).toBeInTheDocument();
+
+    // Complete it (partial update - only sets completed: true)
+    fireEvent.click(screen.getByText('Complete'));
+
+    // Title should still be visible after completion
+    expect(screen.getByText('New Task')).toBeInTheDocument();
+  });
+
+  it('can remove project from task (set to undefined)', () => {
+    render(
+      <TestWrapper>
+        <TestComponent />
+      </TestWrapper>
+    );
+
+    // Add a project, then add a task to it
+    fireEvent.click(screen.getByText('Add Project'));
+    fireEvent.click(screen.getByText('Add Task to Project'));
+    
+    // Task should have a project assigned (not 'no-project')
+    const taskProjectSpan = document.querySelector('[data-testid^="task-project-"]');
+    expect(taskProjectSpan?.textContent).not.toBe('no-project');
+
+    // Remove the project from the task
+    fireEvent.click(screen.getByText('Remove Project'));
+
+    // Task should now have no project
+    expect(taskProjectSpan?.textContent).toBe('no-project');
+    
+    // Task title should still be preserved
+    expect(screen.getByText('Project Task')).toBeInTheDocument();
   });
 });

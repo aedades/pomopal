@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useNotifications } from './useNotifications';
 
@@ -9,18 +9,56 @@ vi.mock('../lib/firebase', () => ({
 }));
 
 describe('useNotifications', () => {
+  let originalNotification: typeof Notification | undefined;
+  let originalServiceWorker: ServiceWorkerContainer | undefined;
+
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Store originals
+    originalNotification = window.Notification;
+    originalServiceWorker = navigator.serviceWorker;
+
+    // Set up fresh Notification mock
+    const mockRequestPermission = vi.fn().mockResolvedValue('granted');
     
-    // Reset Notification mock
     Object.defineProperty(window, 'Notification', {
       writable: true,
+      configurable: true,
       value: class MockNotification {
         static permission: NotificationPermission = 'default';
-        static requestPermission = vi.fn().mockResolvedValue('granted');
+        static requestPermission = mockRequestPermission;
         constructor() {}
       },
     });
+
+    // Ensure serviceWorker is available
+    Object.defineProperty(navigator, 'serviceWorker', {
+      writable: true,
+      configurable: true,
+      value: {
+        register: vi.fn().mockResolvedValue({}),
+        ready: Promise.resolve({}),
+      },
+    });
+  });
+
+  afterEach(() => {
+    // Restore originals
+    if (originalNotification) {
+      Object.defineProperty(window, 'Notification', {
+        writable: true,
+        configurable: true,
+        value: originalNotification,
+      });
+    }
+    if (originalServiceWorker) {
+      Object.defineProperty(navigator, 'serviceWorker', {
+        writable: true,
+        configurable: true,
+        value: originalServiceWorker,
+      });
+    }
   });
 
   describe('Initial State', () => {
@@ -47,9 +85,12 @@ describe('useNotifications', () => {
     });
 
     it('reports unsupported when Notification API is missing', async () => {
-      const originalNotification = window.Notification;
-      // @ts-ignore
-      delete window.Notification;
+      // Remove Notification API by setting to undefined
+      Object.defineProperty(window, 'Notification', {
+        writable: true,
+        configurable: true,
+        value: undefined,
+      });
 
       const { result } = renderHook(() => useNotifications());
 
@@ -58,9 +99,6 @@ describe('useNotifications', () => {
       });
 
       expect(result.current.supported).toBe(false);
-
-      // Restore
-      window.Notification = originalNotification;
     });
   });
 
@@ -80,7 +118,7 @@ describe('useNotifications', () => {
     });
 
     it('updates permission state after request', async () => {
-      (Notification.requestPermission as any).mockResolvedValue('granted');
+      (Notification.requestPermission as ReturnType<typeof vi.fn>).mockResolvedValue('granted');
 
       const { result } = renderHook(() => useNotifications());
 
@@ -96,7 +134,7 @@ describe('useNotifications', () => {
     });
 
     it('handles denied permission', async () => {
-      (Notification.requestPermission as any).mockResolvedValue('denied');
+      (Notification.requestPermission as ReturnType<typeof vi.fn>).mockResolvedValue('denied');
 
       const { result } = renderHook(() => useNotifications());
 
@@ -113,9 +151,12 @@ describe('useNotifications', () => {
     });
 
     it('returns null when notifications not supported', async () => {
-      const originalNotification = window.Notification;
-      // @ts-ignore
-      delete window.Notification;
+      // Remove Notification API
+      Object.defineProperty(window, 'Notification', {
+        writable: true,
+        configurable: true,
+        value: undefined,
+      });
 
       const { result } = renderHook(() => useNotifications());
 
@@ -130,8 +171,6 @@ describe('useNotifications', () => {
 
       expect(returnValue).toBe(null);
       expect(result.current.error).toBe('Notifications not supported');
-
-      window.Notification = originalNotification;
     });
   });
 
@@ -147,12 +186,7 @@ describe('useNotifications', () => {
     });
 
     it('does not attempt FCM token when Firebase is not configured', async () => {
-      (Notification.requestPermission as any).mockResolvedValue('granted');
-      Object.defineProperty(Notification, 'permission', {
-        value: 'granted',
-        writable: true,
-        configurable: true,
-      });
+      (Notification.requestPermission as ReturnType<typeof vi.fn>).mockResolvedValue('granted');
 
       const { result } = renderHook(() => useNotifications());
 

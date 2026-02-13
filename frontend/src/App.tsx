@@ -10,6 +10,7 @@ import DailyProgress from './components/DailyProgress'
 import Stats from './components/Stats'
 import { IOSInstructions, IOSInstallBanner } from './components/IOSInstructions'
 import { TaskProvider, useTaskContext } from './context/TaskContext'
+import { AuthProvider } from './context/AuthContext'
 import { VERSION } from './version'
 
 type View = 'timer' | 'stats'
@@ -49,9 +50,25 @@ function AppContent() {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return
       }
-      if (e.code === 'Space') {
-        e.preventDefault()
-        timer.toggle()
+      
+      switch (e.code) {
+        case 'Space':
+          e.preventDefault()
+          timer.toggle()
+          break
+        case 'KeyS':
+          e.preventDefault()
+          timer.resetTimer(timer.mode)
+          break
+        case 'KeyN':
+          e.preventDefault()
+          setView('timer') // Switch to timer view if on stats
+          // Focus the new task input
+          setTimeout(() => {
+            const input = document.getElementById('new-task-input')
+            input?.focus()
+          }, 0)
+          break
       }
     }
 
@@ -164,11 +181,23 @@ function AppContent() {
           )}
         </main>
 
-        <footer className="text-center mt-8 text-white/60 dark:text-gray-500 text-sm space-y-1">
-          <p>Press <kbd className="px-1.5 py-0.5 bg-white/20 rounded">Space</kbd> to start/pause</p>
+        <footer className="text-center mt-8 text-white/60 dark:text-gray-500 text-sm space-y-2">
+          <p className="flex flex-wrap justify-center gap-x-3 gap-y-1">
+            <span><kbd className="px-1.5 py-0.5 bg-white/20 rounded">Space</kbd> start/pause</span>
+            <span><kbd className="px-1.5 py-0.5 bg-white/20 rounded">S</kbd> skip</span>
+            <span><kbd className="px-1.5 py-0.5 bg-white/20 rounded">N</kbd> new task</span>
+          </p>
           <p className="text-white/50">
             📦 Data saved locally in your browser
           </p>
+          <a
+            href="https://buymeacoffee.com/aedades"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 rounded-full text-sm font-medium transition-colors"
+          >
+            ☕ Buy me a coffee
+          </a>
           <p className="text-white/40 dark:text-gray-600 text-xs mt-2">
             v{VERSION}
           </p>
@@ -180,8 +209,10 @@ function AppContent() {
 
 export default function App() {
   return (
-    <TaskProvider>
-      <AppContent />
-    </TaskProvider>
+    <AuthProvider>
+      <TaskProvider>
+        <AppContent />
+      </TaskProvider>
+    </AuthProvider>
   )
 }

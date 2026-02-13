@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react'
 import { useGuestData, GuestTask, GuestProject, GuestPomodoro } from '../hooks/useLocalStorage'
+import { useFirestoreData, migrateLocalToFirestore } from '../hooks/useFirestoreData'
+import { useAuth } from './AuthContext'
 
 interface Task {
   id: string
@@ -26,6 +28,8 @@ interface TaskContextType {
   pomodoros: GuestPomodoro[]
   guestTasks: GuestTask[]
   guestProjects: GuestProject[]
+  isLoading: boolean
+  isCloudSync: boolean
   
   addTask: (title: string, projectId?: string, estimate?: number) => void
   updateTask: (id: string, updates: Partial<Task>) => void
@@ -35,6 +39,7 @@ interface TaskContextType {
   addProject: (name: string, color?: string) => void
   updateProject: (id: string, updates: Partial<Project>) => void
   deleteProject: (id: string) => void
+  deleteProjectWithTasks: (id: string) => void
   
   recordPomodoro: (interrupted: boolean) => void
 }
@@ -42,21 +47,54 @@ interface TaskContextType {
 const TaskContext = createContext<TaskContextType | null>(null)
 
 export function TaskProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth()
   const guestData = useGuestData()
+  const firestoreData = useFirestoreData(user?.id ?? null)
   const [activeTask, setActiveTask] = useState<Task | null>(null)
+  const [hasMigrated, setHasMigrated] = useState(() => {
+    return localStorage.getItem('pomodoro:migrated') === 'true'
+  })
 
-  // Convert guest data to standard format
-  const tasks: Task[] = guestData.tasks.map((t: GuestTask) => ({
+  // Choose data source based on auth state
+  const isCloudSync = !!user
+  const dataSource = isCloudSync ? firestoreData : guestData
+  const isLoading = isCloudSync ? firestoreData.isLoading : false
+
+  // Migrate local data to Firestore on first sign-in
+  useEffect(() => {
+    if (user && !hasMigrated && guestData.tasks.length > 0) {
+      // User just signed in and has local data to migrate
+      migrateLocalToFirestore(
+        {
+          tasks: guestData.tasks,
+          projects: guestData.projects,
+          pomodoros: guestData.pomodoros,
+        },
+        user.id
+      ).then(() => {
+        // Mark as migrated so we don't do it again
+        localStorage.setItem('pomodoro:migrated', 'true')
+        setHasMigrated(true)
+        // TODO: Uncomment when Firebase is ready to clear local data
+        // clearLocalData()
+      })
+    }
+  // Only trigger on user/migration state changes, not on data changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, hasMigrated])
+
+  // Convert data to standard format
+  const tasks: Task[] = dataSource.tasks.map((t: GuestTask) => ({
     id: t.id,
     title: t.title,
     project_id: t.projectId,
-    project_name: guestData.projects.find((p: GuestProject) => p.id === t.projectId)?.name,
+    project_name: dataSource.projects.find((p: GuestProject) => p.id === t.projectId)?.name,
     completed: t.completed,
     estimated_pomodoros: t.estimatedPomodoros,
     actual_pomodoros: t.actualPomodoros,
   }))
 
-  const projects: Project[] = guestData.projects.map((p: GuestProject) => ({
+  const projects: Project[] = dataSource.projects.map((p: GuestProject) => ({
     id: p.id,
     name: p.name,
     color: p.color,
@@ -64,40 +102,56 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   }))
 
   const addTask = useCallback((title: string, projectId?: string, estimate = 1) => {
-    guestData.addTask(title, projectId, estimate)
-  }, [guestData])
+    dataSource.addTask(title, projectId, estimate)
+  }, [dataSource])
 
   const updateTask = useCallback((id: string, updates: Partial<Task>) => {
-    guestData.updateTask(id, {
-      title: updates.title,
-      projectId: updates.project_id,
-      completed: updates.completed,
-      estimatedPomodoros: updates.estimated_pomodoros,
-    })
-  }, [guestData])
+    // Only include properties that were explicitly provided in updates
+    // Use 'in' operator to distinguish between "not provided" vs "provided as undefined"
+    const guestUpdates: Partial<GuestTask> = {}
+    if ('title' in updates) guestUpdates.title = updates.title
+    if ('project_id' in updates) guestUpdates.projectId = updates.project_id
+    if ('completed' in updates) guestUpdates.completed = updates.completed
+    if ('estimated_pomodoros' in updates) guestUpdates.estimatedPomodoros = updates.estimated_pomodoros
+    
+    dataSource.updateTask(id, guestUpdates)
+  }, [dataSource])
 
   const deleteTask = useCallback((id: string) => {
-    guestData.deleteTask(id)
+    dataSource.deleteTask(id)
     if (activeTask?.id === id) {
       setActiveTask(null)
     }
-  }, [guestData, activeTask])
+  }, [dataSource, activeTask])
 
   const addProject = useCallback((name: string, color?: string) => {
-    guestData.addProject(name, color)
-  }, [guestData])
+    dataSource.addProject(name, color)
+  }, [dataSource])
 
   const updateProject = useCallback((id: string, updates: Partial<Project>) => {
-    guestData.updateProject(id, updates)
-  }, [guestData])
+    dataSource.updateProject(id, updates)
+  }, [dataSource])
 
   const deleteProject = useCallback((id: string) => {
-    guestData.deleteProject(id)
-  }, [guestData])
+    dataSource.deleteProject(id)
+  }, [dataSource])
+
+  const deleteProjectWithTasks = useCallback((id: string) => {
+    // Delete all tasks associated with this project
+    const tasksToDelete = dataSource.tasks.filter((t: GuestTask) => t.projectId === id)
+    tasksToDelete.forEach((t: GuestTask) => {
+      dataSource.deleteTask(t.id)
+      if (activeTask?.id === t.id) {
+        setActiveTask(null)
+      }
+    })
+    // Then delete the project
+    dataSource.deleteProject(id)
+  }, [dataSource, activeTask])
 
   const recordPomodoro = useCallback((interrupted: boolean) => {
-    guestData.recordPomodoro(activeTask?.id, interrupted)
-  }, [guestData, activeTask])
+    dataSource.recordPomodoro(activeTask?.id, interrupted)
+  }, [dataSource, activeTask])
 
   // Clear active task if it gets completed
   useEffect(() => {
@@ -115,10 +169,12 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         tasks,
         projects,
         activeTask,
-        todayPomodoros: guestData.todayPomodoros,
-        pomodoros: guestData.pomodoros,
-        guestTasks: guestData.tasks,
+        todayPomodoros: dataSource.todayPomodoros,
+        pomodoros: dataSource.pomodoros,
+        guestTasks: guestData.tasks,  // Always expose guest data for migration check
         guestProjects: guestData.projects,
+        isLoading,
+        isCloudSync,
         addTask,
         updateTask,
         deleteTask,
@@ -126,6 +182,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         addProject,
         updateProject,
         deleteProject,
+        deleteProjectWithTasks,
         recordPomodoro,
       }}
     >
