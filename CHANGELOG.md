@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0](https://github.com/aedades/pomopal/compare/v1.0.1...v1.1.0) (2026-02-13)
+
+
+### Features
+
+* sync timer state across devices ([6fe33fd](https://github.com/aedades/pomopal/commit/6fe33fd26f58b7b4397662dc81bd50bb69a3c1f6))
+* sync timer state across devices via Firestore ([f079fd2](https://github.com/aedades/pomopal/commit/f079fd252c6b462d558567be18be28629457d4d6))
+* wire up push notifications to timer ([9a36013](https://github.com/aedades/pomopal/commit/9a36013cf48820256f7b1b2ef89ef5a8e1494d26))
+* wire up push notifications to timer ([cb37784](https://github.com/aedades/pomopal/commit/cb3778439d2bf5de714782f3b5536b3c2911548e))
+
+
+### Bug Fixes
+
+* filter undefined values before Firestore writes ([257e907](https://github.com/aedades/pomopal/commit/257e907894d541db3004a993ec5715378ffef19b))
+* filter undefined values before Firestore writes ([e86dde1](https://github.com/aedades/pomopal/commit/e86dde1883d4ce883ecaabcd0539f742dd7838c2))
+
 ## [1.0.1](https://github.com/aedades/pomopal/compare/v1.0.0...v1.0.1) (2026-02-13)
 
 
