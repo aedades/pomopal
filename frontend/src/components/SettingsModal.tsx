@@ -1,9 +1,36 @@
+import { useState } from 'react'
 import type { Settings } from '../hooks/useSettings'
 
 interface SettingsModalProps {
   settings: Settings
   onUpdate: (updates: Partial<Settings>) => void
   onClose: () => void
+}
+
+// Help tooltip component
+function HelpTip({ text }: { text: string }) {
+  const [show, setShow] = useState(false)
+  
+  return (
+    <span className="relative inline-block ml-1">
+      <button
+        type="button"
+        onClick={() => setShow(!show)}
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+        className="w-4 h-4 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400 text-xs inline-flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-500"
+        aria-label="Help"
+      >
+        ?
+      </button>
+      {show && (
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 text-xs text-white bg-gray-800 dark:bg-gray-900 rounded-lg shadow-lg z-10">
+          {text}
+          <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-800 dark:border-t-gray-900" />
+        </div>
+      )}
+    </span>
+  )
 }
 
 export default function SettingsModal({ settings, onUpdate, onClose }: SettingsModalProps) {
@@ -72,7 +99,10 @@ export default function SettingsModal({ settings, onUpdate, onClose }: SettingsM
               Goals
             </h3>
             <div className="flex items-center justify-between">
-              <label htmlFor="daily-goal" className="text-gray-700 dark:text-gray-300">Daily pomodoro goal</label>
+              <label htmlFor="daily-goal" className="text-gray-700 dark:text-gray-300">
+                Daily pomodoro goal
+                <HelpTip text="Set a target number of pomodoros to complete each day. Your progress is shown at the top of the timer view." />
+              </label>
               <input
                 id="daily-goal"
                 type="number"
@@ -95,16 +125,19 @@ export default function SettingsModal({ settings, onUpdate, onClose }: SettingsM
                 label="Auto-start breaks"
                 checked={settings.auto_start_breaks}
                 onChange={(v) => onUpdate({ auto_start_breaks: v })}
+                help="Automatically start break timer when a work session ends."
               />
               <Toggle
                 label="Sound notifications"
                 checked={settings.sound_enabled}
                 onChange={(v) => onUpdate({ sound_enabled: v })}
+                help="Play a sound when the timer completes."
               />
               <Toggle
                 label="Browser notifications"
                 checked={settings.notifications_enabled}
                 onChange={(v) => onUpdate({ notifications_enabled: v })}
+                help="Show a desktop notification when the timer completes (even if the tab is in the background)."
               />
               <Toggle
                 label="Dark mode"
@@ -115,6 +148,7 @@ export default function SettingsModal({ settings, onUpdate, onClose }: SettingsM
                 label="Move completed tasks to bottom"
                 checked={settings.move_completed_to_bottom}
                 onChange={(v) => onUpdate({ move_completed_to_bottom: v })}
+                help="Automatically sort completed tasks to the bottom of the list."
               />
             </div>
           </section>
@@ -140,7 +174,10 @@ export default function SettingsModal({ settings, onUpdate, onClose }: SettingsM
           {/* Long break interval */}
           <section>
             <div className="flex items-center justify-between">
-              <label className="text-gray-700 dark:text-gray-300">Long break after</label>
+              <label className="text-gray-700 dark:text-gray-300">
+                Long break after
+                <HelpTip text="After completing this many pomodoros, you'll get a longer break instead of a short one." />
+              </label>
               <div className="flex items-center gap-2">
                 <input
                   type="number"
@@ -171,14 +208,19 @@ function Toggle({
   label,
   checked,
   onChange,
+  help,
 }: {
   label: string
   checked: boolean
   onChange: (value: boolean) => void
+  help?: string
 }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-gray-700 dark:text-gray-300">{label}</span>
+      <span className="text-gray-700 dark:text-gray-300">
+        {label}
+        {help && <HelpTip text={help} />}
+      </span>
       <button
         onClick={() => onChange(!checked)}
         className={`w-12 h-6 rounded-full transition-colors ${

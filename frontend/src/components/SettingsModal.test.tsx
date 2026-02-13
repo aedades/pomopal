@@ -40,7 +40,7 @@ describe('SettingsModal', () => {
     );
 
     expect(screen.getByLabelText(/work/i)).toHaveValue(45);
-    expect(screen.getByLabelText(/daily pomodoro goal/i)).toHaveValue(12);
+    expect(screen.getByRole('spinbutton', { name: /daily pomodoro goal/i })).toHaveValue(12);
   });
 
   it('calls onUpdate with new value when timer duration changes', () => {

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { Settings } from '../hooks/useSettings'
 import SettingsModal from './SettingsModal'
+import HelpModal from './HelpModal'
 import { useAuth } from '../context/AuthContext'
 
 interface HeaderProps {
@@ -10,6 +11,7 @@ interface HeaderProps {
 
 export default function Header({ settings, onUpdateSettings }: HeaderProps) {
   const [showSettings, setShowSettings] = useState(false)
+  const [showHelp, setShowHelp] = useState(false)
   const { user, signInWithGoogle, signOut } = useAuth()
 
   return (
@@ -59,6 +61,15 @@ export default function Header({ settings, onUpdateSettings }: HeaderProps) {
           {settings.dark_mode ? '☀️' : '🌙'}
         </button>
 
+        {/* Help */}
+        <button
+          onClick={() => setShowHelp(true)}
+          className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+          title="Help & Guide"
+        >
+          ❓
+        </button>
+
         {/* Settings */}
         <button
           onClick={() => setShowSettings(true)}
@@ -75,6 +86,10 @@ export default function Header({ settings, onUpdateSettings }: HeaderProps) {
           onUpdate={onUpdateSettings}
           onClose={() => setShowSettings(false)}
         />
+      )}
+
+      {showHelp && (
+        <HelpModal onClose={() => setShowHelp(false)} />
       )}
     </header>
   )
