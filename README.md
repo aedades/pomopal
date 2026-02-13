@@ -173,8 +173,6 @@ npm test -- --watch
 npm test -- --coverage
 ```
 
-**Current:** 158 tests covering hooks, components, and contexts.
-
 ## Keyboard Shortcuts
 
 | Key | Action |
