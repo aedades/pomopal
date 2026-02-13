@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react'
 import { useGuestData, GuestTask, GuestProject, GuestPomodoro } from '../hooks/useLocalStorage'
-import { useFirestoreData, mergeLocalToFirestore, clearLocalData, saveToLocalStorage } from '../hooks/useFirestoreData'
+import { useFirestoreData, mergeLocalToFirestore, clearLocalData } from '../hooks/useFirestoreData'
 import { useAuth } from './AuthContext'
 import { isFirebaseConfigured } from '../lib/firebase'
 
@@ -80,7 +80,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     }
   }, [user, firestoreData.tasks, firestoreData.projects, firestoreData.pomodoros])
 
-  // Save Firestore data to localStorage on sign-out
+  // Save Firestore data to guest state on sign-out
   useEffect(() => {
     const prevUser = prevUserRef.current
     prevUserRef.current = user?.id ?? null
@@ -89,12 +89,16 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     if (prevUser && !user) {
       const data = firestoreDataRef.current
       if (data.tasks.length > 0 || data.projects.length > 0) {
-        saveToLocalStorage(data)
+        // Update guest state directly (also persists to localStorage via useLocalStorage)
+        guestData.setAllTasks(data.tasks)
+        guestData.setAllProjects(data.projects)
+        guestData.setAllPomodoros(data.pomodoros)
+        console.log('Firestore data synced to guest state on sign-out')
       }
       // Reset migration flag so merge can run on next sign-in
       setHasMigrated(false)
     }
-  }, [user])
+  }, [user, guestData])
 
   // Merge local data into Firestore on sign-in
   // Waits for Firestore to load so we can compare and only add new items
