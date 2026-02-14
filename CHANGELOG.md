@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0](https://github.com/aedades/pomopal/compare/v1.2.0...v1.3.0) (2026-02-14)
+
+
+### Features
+
+* add completed projects management ([#37](https://github.com/aedades/pomopal/issues/37)) ([efedbbc](https://github.com/aedades/pomopal/commit/efedbbcd3fccda138a6712eaa301dbe174439c2a))
+* add time period filter to stats ([#36](https://github.com/aedades/pomopal/issues/36)) ([88c16a4](https://github.com/aedades/pomopal/commit/88c16a4518ab768479c4f2b9d5cef24769abff27))
+* average pomodoro length stat + data accuracy fixes ([#34](https://github.com/aedades/pomopal/issues/34)) ([5b781da](https://github.com/aedades/pomopal/commit/5b781da862586be716b7787a21904210ef6d5e28))
+
 ## [1.2.0](https://github.com/aedades/pomopal/compare/v1.1.6...v1.2.0) (2026-02-13)
 
 
