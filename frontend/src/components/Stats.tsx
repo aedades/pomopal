@@ -1,7 +1,17 @@
 import { Stats as StatsType, DailyStats, ProjectStats, ProductivityInsight, formatDuration } from '../hooks/useStats'
 
+type StatsPeriod = '30d' | '1y' | 'all'
+
 interface StatsProps {
   stats: StatsType
+  period: StatsPeriod
+  onPeriodChange: (period: StatsPeriod) => void
+}
+
+const periodLabels: Record<StatsPeriod, string> = {
+  '30d': 'Last 30 Days',
+  '1y': 'Last Year',
+  'all': 'All Time',
 }
 
 function StatCard({ label, value, subtext }: { label: string; value: string | number; subtext?: string }) {
@@ -188,9 +198,26 @@ function ProductivityInsights({ insights }: { insights: ProductivityInsight }) {
   )
 }
 
-export default function Stats({ stats }: StatsProps) {
+export default function Stats({ stats, period, onPeriodChange }: StatsProps) {
   return (
     <div className="space-y-4">
+      {/* Period toggle */}
+      <div className="flex justify-center gap-2">
+        {(['30d', '1y', 'all'] as StatsPeriod[]).map((p) => (
+          <button
+            key={p}
+            onClick={() => onPeriodChange(p)}
+            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              period === p
+                ? 'bg-white text-red-500 dark:bg-gray-200 dark:text-gray-800'
+                : 'bg-white/20 text-white/80 hover:bg-white/30 dark:bg-gray-700 dark:text-gray-300'
+            }`}
+          >
+            {periodLabels[p]}
+          </button>
+        ))}
+      </div>
+      
       {/* Top stats row */}
       <div className="grid grid-cols-2 gap-4">
         <StatCard 

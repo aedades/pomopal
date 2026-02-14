@@ -57,15 +57,15 @@ export function useFirestoreData(userId: string | null) {
       console.error('Projects listener error:', error)
     })
 
-    // Subscribe to today's pomodoros
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const todayISO = today.toISOString()
+    // Subscribe to pomodoros from the last year (for stats)
+    const oneYearAgo = new Date()
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
+    const oneYearAgoISO = oneYearAgo.toISOString()
     
     const pomodorosRef = collection(db, 'users', userId, 'pomodoros')
     const pomodorosQuery = query(
       pomodorosRef,
-      where('completedAt', '>=', todayISO),
+      where('completedAt', '>=', oneYearAgoISO),
       orderBy('completedAt', 'desc')
     )
     const unsubPomodoros = onSnapshot(pomodorosQuery, (snapshot) => {
@@ -74,7 +74,11 @@ export function useFirestoreData(userId: string | null) {
         ...doc.data() 
       })) as GuestPomodoro[]
       setPomodoros(data)
-      setTodayPomodoros(data.filter(p => !p.interrupted).length)
+      // Calculate today's pomodoros from the full dataset
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const todayISO = today.toISOString()
+      setTodayPomodoros(data.filter(p => !p.interrupted && p.completedAt >= todayISO).length)
       setIsLoading(false)
     }, (error) => {
       console.error('Pomodoros listener error:', error)
