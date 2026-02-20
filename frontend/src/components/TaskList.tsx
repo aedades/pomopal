@@ -197,15 +197,20 @@ export default function TaskList() {
   })
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-4 md:p-6">
+    <div className="card animate-fade-in-up p-5 md:p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-gray-800 dark:text-white">Tasks</h2>
+        <h2 className="text-lg font-semibold" style={{ color: 'var(--color-text-primary)' }}>Tasks</h2>
         <div className="flex items-center gap-2">
           {projects.length > 0 && (
             <select
               value={selectedProject}
               onChange={(e) => setSelectedProject(e.target.value)}
-              className="text-sm px-2 py-1 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+              className="text-sm px-3 py-1.5 rounded-lg transition-colors"
+              style={{ 
+                background: 'var(--color-bg-tertiary)', 
+                color: 'var(--color-text-primary)',
+                border: 'none',
+              }}
               title="Filter tasks & assign new tasks to project"
             >
               <option value="">All Tasks</option>
@@ -217,9 +222,13 @@ export default function TaskList() {
           )}
           <button
             onClick={() => setShowManageProjects(true)}
-            className="text-sm px-2 py-1 text-gray-500 dark:text-gray-400 hover:text-red-500 border border-gray-200 dark:border-gray-600 rounded-lg"
+            className="text-sm px-3 py-1.5 rounded-lg transition-colors hover:opacity-80"
+            style={{ 
+              background: 'var(--color-bg-tertiary)', 
+              color: 'var(--color-text-secondary)',
+            }}
           >
-            ⚙️ Projects
+            Projects
           </button>
         </div>
       </div>
@@ -237,11 +246,16 @@ export default function TaskList() {
               ? `Add task to ${projects.find(p => p.id === selectedProject)?.name}...` 
               : "Add a task..."
           }
-          className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+          className="flex-1 px-4 py-3 rounded-xl transition-all"
+          style={{ 
+            background: 'var(--color-bg-tertiary)', 
+            color: 'var(--color-text-primary)',
+            border: 'none',
+          }}
         />
         <button
           onClick={handleAddTask}
-          className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+          className="btn-primary px-5 py-3"
         >
           Add
         </button>
@@ -269,7 +283,10 @@ export default function TaskList() {
       </ul>
 
       {filteredTasks.length === 0 && (
-        <p className="text-center text-gray-400 dark:text-gray-500 py-6">
+        <p 
+          className="text-center py-8 text-sm"
+          style={{ color: 'var(--color-text-secondary)' }}
+        >
           No tasks yet. Add one to get started!
         </p>
       )}
@@ -393,15 +410,18 @@ function TaskItem({
       onDragOver={onDragOver}
       onDrop={onDrop}
       onDragEnd={onDragEnd}
-      className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
-        isDragging
-          ? 'opacity-50 bg-gray-100 dark:bg-gray-600'
-          : isActive
-          ? 'bg-red-50 dark:bg-red-900/30 border-2 border-red-500'
-          : task.completed
-          ? 'bg-gray-50 dark:bg-gray-700/50'
-          : 'bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer'
+      className={`flex items-center gap-3 p-3.5 rounded-xl transition-all duration-150 ${
+        isDragging ? 'opacity-50' : ''
       } ${isDraggable ? 'cursor-grab active:cursor-grabbing' : ''}`}
+      style={{
+        background: isDragging
+          ? 'var(--color-bg-tertiary)'
+          : isActive
+          ? 'rgba(255, 107, 107, 0.1)'
+          : 'var(--color-bg-tertiary)',
+        border: isActive ? '2px solid var(--color-accent)' : '2px solid transparent',
+        opacity: task.completed ? 0.6 : 1,
+      }}
       onClick={onSelect}
     >
       {/* Drag handle for undated tasks */}
@@ -416,46 +436,53 @@ function TaskItem({
           e.stopPropagation()
           onToggle()
         }}
-        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors flex-shrink-0 ${
-          task.completed
-            ? 'bg-green-500 border-green-500 text-white'
-            : 'border-gray-300 dark:border-gray-500 hover:border-red-500'
-        }`}
+        className="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0"
+        style={{
+          background: task.completed ? 'var(--color-success)' : 'transparent',
+          borderColor: task.completed ? 'var(--color-success)' : 'var(--color-bg-tertiary)',
+          color: 'white',
+        }}
       >
         {task.completed && '✓'}
       </button>
 
       <div className="flex-1 min-w-0">
         <span
-          className={`block truncate ${
-            task.completed
-              ? 'line-through text-gray-400 dark:text-gray-500'
-              : 'text-gray-800 dark:text-gray-200'
-          }`}
+          className="block truncate font-medium"
+          style={{
+            color: task.completed ? 'var(--color-text-secondary)' : 'var(--color-text-primary)',
+            textDecoration: task.completed ? 'line-through' : 'none',
+          }}
         >
           {task.title || '(untitled)'}
         </span>
-        <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
+        <div className="flex items-center gap-2 text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
           {task.project_name && (
             <span>{task.project_name}</span>
           )}
           {task.due_date && (
-            <span className={`flex items-center gap-0.5 ${
-              !task.completed && new Date(task.due_date) < new Date() 
-                ? 'text-red-500' 
-                : ''
-            }`}>
+            <span 
+              className="flex items-center gap-0.5"
+              style={{
+                color: !task.completed && new Date(task.due_date) < new Date() 
+                  ? 'var(--color-accent)' 
+                  : 'var(--color-text-secondary)'
+              }}
+            >
               📅 {formatDueDate(task.due_date)}
             </span>
           )}
         </div>
       </div>
 
-      <span className={`text-sm flex-shrink-0 ${
-        task.actual_pomodoros > task.estimated_pomodoros 
-          ? 'text-orange-500' 
-          : 'text-gray-400 dark:text-gray-500'
-      }`}>
+      <span 
+        className="text-sm flex-shrink-0 tabular-nums"
+        style={{
+          color: task.actual_pomodoros > task.estimated_pomodoros 
+            ? '#FF9500' 
+            : 'var(--color-text-secondary)'
+        }}
+      >
         🍅 {task.actual_pomodoros}/{task.estimated_pomodoros}
       </span>
 
@@ -464,10 +491,13 @@ function TaskItem({
           e.stopPropagation()
           onEdit()
         }}
-        className="text-gray-400 hover:text-blue-500 transition-colors flex-shrink-0"
+        className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:bg-[var(--color-bg-secondary)] flex-shrink-0"
+        style={{ color: 'var(--color-text-secondary)' }}
         title="Edit task"
       >
-        ✏️
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+        </svg>
       </button>
 
       <button
@@ -475,10 +505,13 @@ function TaskItem({
           e.stopPropagation()
           onDelete()
         }}
-        className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
+        className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:bg-[var(--color-bg-secondary)] flex-shrink-0"
+        style={{ color: 'var(--color-text-secondary)' }}
         title="Delete task"
       >
-        ✕
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+        </svg>
       </button>
     </li>
   )

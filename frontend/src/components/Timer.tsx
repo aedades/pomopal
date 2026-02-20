@@ -51,13 +51,11 @@ export default function Timer({
     }
   }
 
-  // Progress calculation differs for flow mode
+  // Progress calculation
   let progress: number
   if (isFlowMode && mode === 'work') {
-    // Flow mode: progress towards target (caps at 100%)
     progress = Math.min(100, (elapsed / targetTime) * 100)
   } else {
-    // Countdown mode
     progress = ((getDuration(mode) - timeLeft) / getDuration(mode)) * 100
   }
 
@@ -67,88 +65,115 @@ export default function Timer({
     longBreak: 'Long Break',
   }
 
-  // In flow mode during work, show different button text
   const getButtonText = () => {
     if (!isRunning) return 'Start'
     if (isFlowMode && mode === 'work') {
-      return isOverTarget ? 'Complete ✓' : 'Stop'
+      return isOverTarget ? 'Complete' : 'Stop'
     }
     return 'Pause'
   }
 
+  // Ring calculations
+  const radius = 140
+  const circumference = 2 * Math.PI * radius
+  const strokeDashoffset = circumference * (1 - progress / 100)
+
+  // Colors based on state
+  const getAccentColor = () => {
+    if (isOverTarget) return 'var(--color-success)'
+    if (mode === 'work') return 'var(--color-accent)'
+    return '#5AC8FA' // iOS blue for breaks
+  }
+
   return (
-    <div className="bg-white/20 dark:bg-gray-800/50 backdrop-blur-sm rounded-3xl p-6 md:p-8 text-center">
-      {/* Mode selector */}
-      <div className="flex justify-center gap-2 mb-6 flex-wrap">
-        {(['work', 'shortBreak', 'longBreak'] as TimerMode[]).map((m) => (
-          <button
-            key={m}
-            onClick={() => onModeChange(m)}
-            className={`px-3 md:px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-              mode === m
-                ? 'bg-white dark:bg-red-500 text-red-500 dark:text-white'
-                : 'text-white hover:bg-white/20'
-            }`}
-          >
-            {modeLabels[m]}
-            {m === 'work' && settings.flow_mode_enabled && (
-              <span className="ml-1 text-xs opacity-75">⏱</span>
-            )}
-          </button>
-        ))}
+    <div className="card animate-fade-in-up">
+      {/* Mode selector - Apple segmented control style */}
+      <div className="flex justify-center mb-8">
+        <div className="segmented-control">
+          {(['work', 'shortBreak', 'longBreak'] as TimerMode[]).map((m) => (
+            <button
+              key={m}
+              onClick={() => onModeChange(m)}
+              className={mode === m ? 'active' : ''}
+            >
+              {modeLabels[m]}
+              {m === 'work' && settings.flow_mode_enabled && (
+                <span className="ml-1 opacity-60">⏱</span>
+              )}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Flow mode indicator */}
       {isFlowMode && mode === 'work' && (
-        <div className="mb-4 text-white/80 dark:text-gray-400 text-sm">
-          <span className="bg-white/20 dark:bg-gray-700 px-3 py-1 rounded-full">
-            Flow Mode — {isOverTarget ? '✓ Goal reached!' : `Goal: ${formatTime(targetTime)}`}
+        <div className="text-center mb-6">
+          <span 
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium"
+            style={{ 
+              background: isOverTarget ? 'rgba(52, 199, 89, 0.1)' : 'var(--color-bg-tertiary)',
+              color: isOverTarget ? 'var(--color-success)' : 'var(--color-text-secondary)'
+            }}
+          >
+            {isOverTarget ? '✓ Goal reached!' : `Flow Mode · Goal: ${formatTime(targetTime)}`}
           </span>
         </div>
       )}
 
-      {/* Timer display */}
-      <div className="relative w-48 h-48 md:w-64 md:h-64 mx-auto mb-6">
-        <svg className="w-full h-full -rotate-90" viewBox="0 0 256 256">
+      {/* Timer display - Hero element */}
+      <div className="relative w-72 h-72 md:w-80 md:h-80 mx-auto mb-8">
+        {/* Background ring */}
+        <svg className="w-full h-full -rotate-90" viewBox="0 0 320 320">
           <circle
-            cx="128"
-            cy="128"
-            r="120"
+            cx="160"
+            cy="160"
+            r={radius}
             fill="none"
-            stroke="rgba(255,255,255,0.2)"
-            strokeWidth="8"
-            className="dark:stroke-gray-700"
+            stroke="var(--color-bg-tertiary)"
+            strokeWidth="12"
           />
+          {/* Progress ring */}
           <circle
-            cx="128"
-            cy="128"
-            r="120"
+            cx="160"
+            cy="160"
+            r={radius}
             fill="none"
-            stroke={isOverTarget ? '#22c55e' : 'white'} // Green when over target
-            strokeWidth="8"
+            stroke={getAccentColor()}
+            strokeWidth="12"
             strokeLinecap="round"
-            strokeDasharray={2 * Math.PI * 120}
-            strokeDashoffset={2 * Math.PI * 120 * (1 - progress / 100)}
-            className={`transition-all duration-1000 ${
-              isOverTarget ? 'dark:stroke-green-400' : 'dark:stroke-red-400'
-            }`}
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            style={{
+              transition: 'stroke-dashoffset 1s ease-out, stroke 0.3s ease',
+            }}
           />
         </svg>
+        
+        {/* Center content */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className={`text-5xl md:text-6xl font-bold tabular-nums ${
-            isOverTarget 
-              ? 'text-green-400' 
-              : 'text-white dark:text-gray-100'
-          }`}>
+          <span 
+            className={`text-6xl md:text-7xl font-light tabular-nums tracking-tight ${
+              isRunning ? 'animate-gentle-pulse' : ''
+            }`}
+            style={{ color: isOverTarget ? 'var(--color-success)' : 'var(--color-text-primary)' }}
+          >
             {formatTime(timeLeft)}
           </span>
+          
           {isFlowMode && mode === 'work' && isRunning && (
-            <span className="text-white/60 dark:text-gray-500 text-xs mt-1">
-              {isOverTarget ? 'over target' : 'counting up'}
+            <span 
+              className="text-xs font-medium mt-2 uppercase tracking-wider"
+              style={{ color: 'var(--color-text-secondary)' }}
+            >
+              {isOverTarget ? 'Over target' : 'Counting up'}
             </span>
           )}
+          
           {activeTask && (
-            <span className="text-white/80 dark:text-gray-400 text-sm mt-2 max-w-[150px] md:max-w-[180px] truncate px-2">
+            <span 
+              className="text-sm mt-3 max-w-[200px] truncate px-4 text-center font-medium"
+              style={{ color: 'var(--color-text-secondary)' }}
+            >
               {activeTask}
             </span>
           )}
@@ -156,39 +181,47 @@ export default function Timer({
       </div>
 
       {/* Controls */}
-      <div className="flex justify-center gap-3 md:gap-4">
+      <div className="flex justify-center gap-4">
         <button
           onClick={onToggle}
-          className={`px-6 md:px-8 py-3 rounded-full font-bold text-lg transition-colors ${
-            isOverTarget && isRunning
-              ? 'bg-green-500 hover:bg-green-600 text-white'
-              : 'bg-white dark:bg-red-500 text-red-500 dark:text-white hover:bg-white/90 dark:hover:bg-red-600'
-          }`}
+          className={isOverTarget && isRunning ? '' : 'btn-primary'}
+          style={isOverTarget && isRunning ? {
+            background: 'var(--color-success)',
+            color: 'white',
+            fontWeight: 600,
+            padding: '14px 32px',
+            borderRadius: '14px',
+            transition: 'all 150ms ease',
+          } : undefined}
         >
           {getButtonText()}
         </button>
-        <button
-          onClick={onReset}
-          className="px-5 md:px-6 py-3 bg-white/20 dark:bg-gray-700 text-white rounded-full font-medium hover:bg-white/30 dark:hover:bg-gray-600 transition-colors"
-        >
+        <button onClick={onReset} className="btn-secondary">
           Reset
         </button>
       </div>
 
-      {/* Session count */}
-      <div className="mt-6 flex justify-center items-center gap-2">
-        {[...Array(settings.long_break_interval)].map((_, i) => (
-          <div
-            key={i}
-            className={`w-3 h-3 rounded-full transition-colors ${
-              i < sessionCount % settings.long_break_interval
-                ? 'bg-white dark:bg-red-400'
-                : 'bg-white/30 dark:bg-gray-600'
-            }`}
-          />
-        ))}
-        <span className="text-white/80 dark:text-gray-400 text-sm ml-2">
-          {sessionCount} today
+      {/* Session progress dots */}
+      <div className="flex justify-center items-center gap-3 mt-8">
+        <div className="flex gap-2">
+          {[...Array(settings.long_break_interval)].map((_, i) => (
+            <div
+              key={i}
+              className="w-2.5 h-2.5 rounded-full transition-all duration-300"
+              style={{
+                background: i < sessionCount % settings.long_break_interval
+                  ? 'var(--color-accent)'
+                  : 'var(--color-bg-tertiary)',
+                transform: i < sessionCount % settings.long_break_interval ? 'scale(1.1)' : 'scale(1)',
+              }}
+            />
+          ))}
+        </div>
+        <span 
+          className="text-sm font-medium"
+          style={{ color: 'var(--color-text-secondary)' }}
+        >
+          {sessionCount} completed
         </span>
       </div>
     </div>

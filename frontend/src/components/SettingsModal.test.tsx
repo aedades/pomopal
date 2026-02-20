@@ -107,10 +107,10 @@ describe('SettingsModal', () => {
       />
     );
 
-    // Find the flow mode toggle by getting all toggle buttons (w-12 h-6 rounded-full)
+    // Find the flow mode toggle by getting all toggle buttons (w-12 h-7 rounded-full)
     const allButtons = Array.from(document.querySelectorAll('button'));
     const toggleButtons = allButtons.filter(btn => 
-      btn.className.includes('w-12') && btn.className.includes('h-6')
+      btn.className.includes('w-12') && btn.className.includes('h-7')
     );
     // Flow mode is after the behavior toggles:
     // 0: daily_goal, 1: exclude_weekends, 2: auto-start, 3: sound, 4: notifications, 5: dark, 6: completed, 7: dated, 8: flow
@@ -141,7 +141,10 @@ describe('SettingsModal', () => {
       />
     );
 
-    fireEvent.click(screen.getByText('✕'));
+    // Close button now has an SVG icon, find it by its container class
+    const closeButton = document.querySelector('button.w-8.h-8.rounded-full');
+    expect(closeButton).toBeInTheDocument();
+    fireEvent.click(closeButton!);
     expect(mockOnClose).toHaveBeenCalled();
   });
 });
