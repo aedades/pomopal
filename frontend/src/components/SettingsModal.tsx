@@ -8,23 +8,26 @@ interface SettingsModalProps {
 }
 
 // Number input that allows empty while typing, validates on blur
-function GoalInput({ id, value, onChange, defaultValue = 8 }: { 
+function NumberInput({ id, value, onChange, defaultValue, min = 1, max = 99, className }: { 
   id?: string
   value: number
   onChange: (n: number) => void
-  defaultValue?: number 
+  defaultValue: number
+  min?: number
+  max?: number
+  className?: string
 }) {
   const [localValue, setLocalValue] = useState(String(value))
   
-  // Sync from props when value changes externally
+  // Validate and sync on blur
   const handleBlur = () => {
     const num = parseInt(localValue)
-    if (isNaN(num) || num < 1) {
+    if (isNaN(num) || num < min) {
       setLocalValue(String(defaultValue))
       onChange(defaultValue)
-    } else if (num > 99) {
-      setLocalValue('99')
-      onChange(99)
+    } else if (num > max) {
+      setLocalValue(String(max))
+      onChange(max)
     } else {
       onChange(num)
     }
@@ -39,7 +42,7 @@ function GoalInput({ id, value, onChange, defaultValue = 8 }: {
       value={localValue}
       onChange={(e) => setLocalValue(e.target.value)}
       onBlur={handleBlur}
-      className="w-20 px-3 py-2 border rounded-lg text-center dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+      className={className || "w-20 px-3 py-2 border rounded-lg text-center dark:bg-gray-700 dark:border-gray-600 dark:text-white"}
     />
   )
 }
@@ -93,38 +96,38 @@ export default function SettingsModal({ settings, onUpdate, onClose }: SettingsM
             <div className="grid grid-cols-3 gap-3">
               <div>
                 <label htmlFor="work-duration" className="text-sm text-gray-600 dark:text-gray-400">Work</label>
-                <input
+                <NumberInput
                   id="work-duration"
-                  type="number"
                   value={settings.work_duration_minutes}
-                  onChange={(e) => onUpdate({ work_duration_minutes: parseInt(e.target.value) || 25 })}
+                  onChange={(n) => onUpdate({ work_duration_minutes: n })}
+                  defaultValue={25}
+                  min={1}
+                  max={60}
                   className="w-full mt-1 px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  min="1"
-                  max="60"
                 />
               </div>
               <div>
                 <label htmlFor="short-break-duration" className="text-sm text-gray-600 dark:text-gray-400">Short Break</label>
-                <input
+                <NumberInput
                   id="short-break-duration"
-                  type="number"
                   value={settings.short_break_minutes}
-                  onChange={(e) => onUpdate({ short_break_minutes: parseInt(e.target.value) || 5 })}
+                  onChange={(n) => onUpdate({ short_break_minutes: n })}
+                  defaultValue={5}
+                  min={1}
+                  max={30}
                   className="w-full mt-1 px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  min="1"
-                  max="30"
                 />
               </div>
               <div>
                 <label htmlFor="long-break-duration" className="text-sm text-gray-600 dark:text-gray-400">Long Break</label>
-                <input
+                <NumberInput
                   id="long-break-duration"
-                  type="number"
                   value={settings.long_break_minutes}
-                  onChange={(e) => onUpdate({ long_break_minutes: parseInt(e.target.value) || 15 })}
+                  onChange={(n) => onUpdate({ long_break_minutes: n })}
+                  defaultValue={15}
+                  min={1}
+                  max={60}
                   className="w-full mt-1 px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  min="1"
-                  max="60"
                 />
               </div>
             </div>
@@ -146,10 +149,11 @@ export default function SettingsModal({ settings, onUpdate, onClose }: SettingsM
                   <label htmlFor="daily-goal" className="text-gray-600 dark:text-gray-400 text-sm">
                     Target
                   </label>
-                  <GoalInput
+                  <NumberInput
                     id="daily-goal"
                     value={settings.daily_pomodoro_goal}
                     onChange={(n) => onUpdate({ daily_pomodoro_goal: n })}
+                    defaultValue={8}
                   />
                 </div>
               )}
@@ -227,13 +231,13 @@ export default function SettingsModal({ settings, onUpdate, onClose }: SettingsM
                 Long break after
               </label>
               <div className="flex items-center gap-2">
-                <input
-                  type="number"
+                <NumberInput
                   value={settings.long_break_interval}
-                  onChange={(e) => onUpdate({ long_break_interval: parseInt(e.target.value) || 4 })}
+                  onChange={(n) => onUpdate({ long_break_interval: n })}
+                  defaultValue={4}
+                  min={2}
+                  max={10}
                   className="w-16 px-3 py-2 border rounded-lg text-center dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  min="2"
-                  max="10"
                 />
                 <span className="text-gray-600 dark:text-gray-400">pomodoros</span>
               </div>

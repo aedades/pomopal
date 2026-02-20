@@ -43,12 +43,12 @@ describe('SettingsModal', () => {
       />
     );
 
-    expect(screen.getByLabelText(/work/i)).toHaveValue(45);
-    // Daily goal input is now labeled "Target" under the toggle (text input)
+    // All number inputs now use type="text" with onBlur validation
+    expect(screen.getByLabelText(/work/i)).toHaveValue('45');
     expect(screen.getByLabelText(/target/i)).toHaveValue('12');
   });
 
-  it('calls onUpdate with new value when timer duration changes', () => {
+  it('calls onUpdate with new value when timer duration changes (on blur)', () => {
     render(
       <SettingsModal
         settings={defaultSettings}
@@ -57,11 +57,45 @@ describe('SettingsModal', () => {
       />
     );
 
-    fireEvent.change(screen.getByLabelText(/work/i), { target: { value: '30' } });
+    // NumberInput validates on blur, not on change
+    const workInput = screen.getByLabelText(/work/i);
+    fireEvent.change(workInput, { target: { value: '30' } });
+    fireEvent.blur(workInput);
     expect(mockOnUpdate).toHaveBeenCalledWith({ work_duration_minutes: 30 });
 
-    fireEvent.change(screen.getByLabelText(/short break/i), { target: { value: '10' } });
+    const shortBreakInput = screen.getByLabelText(/short break/i);
+    fireEvent.change(shortBreakInput, { target: { value: '10' } });
+    fireEvent.blur(shortBreakInput);
     expect(mockOnUpdate).toHaveBeenCalledWith({ short_break_minutes: 10 });
+  });
+
+  it('validates and clamps invalid number input on blur', () => {
+    render(
+      <SettingsModal
+        settings={defaultSettings}
+        onUpdate={mockOnUpdate}
+        onClose={mockOnClose}
+      />
+    );
+
+    const workInput = screen.getByLabelText(/work/i);
+    
+    // Test empty input falls back to default
+    fireEvent.change(workInput, { target: { value: '' } });
+    fireEvent.blur(workInput);
+    expect(mockOnUpdate).toHaveBeenCalledWith({ work_duration_minutes: 25 });
+    expect(workInput).toHaveValue('25');
+
+    // Test value below min falls back to default
+    fireEvent.change(workInput, { target: { value: '0' } });
+    fireEvent.blur(workInput);
+    expect(mockOnUpdate).toHaveBeenCalledWith({ work_duration_minutes: 25 });
+
+    // Test value above max gets clamped
+    fireEvent.change(workInput, { target: { value: '100' } });
+    fireEvent.blur(workInput);
+    expect(mockOnUpdate).toHaveBeenCalledWith({ work_duration_minutes: 60 });
+    expect(workInput).toHaveValue('60');
   });
 
   it('calls onUpdate when toggles are clicked', () => {
