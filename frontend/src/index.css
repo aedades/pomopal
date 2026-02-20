@@ -2,24 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Apple-inspired design system */
+/* Apple-inspired design system with warm gradient */
 :root {
-  /* Light mode palette */
-  --color-bg-primary: #ffffff;
-  --color-bg-secondary: #f5f5f7;
-  --color-bg-tertiary: #e8e8ed;
-  --color-text-primary: #1d1d1f;
-  --color-text-secondary: #86868b;
-  --color-accent: #ff6b6b;
-  --color-accent-hover: #ff5252;
-  --color-success: #34c759;
-  --color-surface: rgba(255, 255, 255, 0.72);
-  --color-surface-elevated: rgba(255, 255, 255, 0.9);
+  /* Light mode - warm gradient palette */
+  --color-bg-primary: rgba(255, 255, 255, 0.95);
+  --color-bg-secondary: transparent; /* gradient applied to body */
+  --color-bg-tertiary: rgba(255, 255, 255, 0.25);
+  --color-text-primary: #ffffff;
+  --color-text-secondary: rgba(255, 255, 255, 0.8);
+  --color-accent: #ef4444;
+  --color-accent-hover: #dc2626;
+  --color-success: #22c55e;
+  --color-surface: rgba(255, 255, 255, 0.2);
+  --color-surface-elevated: rgba(255, 255, 255, 0.25);
+  
+  /* Gradient background */
+  --gradient-bg: linear-gradient(to bottom right, #ef4444, #f97316);
   
   /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.2);
   
   /* Timing */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -28,16 +31,18 @@
 }
 
 .dark {
-  --color-bg-primary: #000000;
-  --color-bg-secondary: #1c1c1e;
-  --color-bg-tertiary: #2c2c2e;
-  --color-text-primary: #f5f5f7;
-  --color-text-secondary: #98989d;
-  --color-accent: #ff6b6b;
-  --color-accent-hover: #ff8080;
-  --color-success: #30d158;
-  --color-surface: rgba(28, 28, 30, 0.72);
-  --color-surface-elevated: rgba(44, 44, 46, 0.9);
+  --color-bg-primary: rgba(31, 41, 55, 0.95);
+  --color-bg-secondary: transparent;
+  --color-bg-tertiary: rgba(55, 65, 81, 0.5);
+  --color-text-primary: #f3f4f6;
+  --color-text-secondary: #9ca3af;
+  --color-accent: #ef4444;
+  --color-accent-hover: #f87171;
+  --color-success: #22c55e;
+  --color-surface: rgba(31, 41, 55, 0.5);
+  --color-surface-elevated: rgba(55, 65, 81, 0.7);
+  
+  --gradient-bg: linear-gradient(to bottom right, #111827, #1f2937);
   
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
@@ -52,9 +57,10 @@ html {
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
-  background: var(--color-bg-secondary);
+  background: var(--gradient-bg);
+  min-height: 100vh;
   color: var(--color-text-primary);
-  transition: background-color var(--transition-smooth), color var(--transition-smooth);
+  transition: background var(--transition-smooth), color var(--transition-smooth);
 }
 
 /* Frosted glass effect */
@@ -100,13 +106,13 @@ body {
 .segmented-control {
   display: inline-flex;
   background: var(--color-bg-tertiary);
-  border-radius: 9px;
-  padding: 2px;
+  border-radius: 12px;
+  padding: 3px;
 }
 
 .segmented-control button {
   padding: 8px 16px;
-  border-radius: 7px;
+  border-radius: 9px;
   font-size: 13px;
   font-weight: 500;
   color: var(--color-text-secondary);
@@ -114,19 +120,20 @@ body {
 }
 
 .segmented-control button.active {
-  background: var(--color-bg-primary);
-  color: var(--color-text-primary);
+  background: white;
+  color: var(--color-accent);
   box-shadow: var(--shadow-sm);
 }
 
 .dark .segmented-control button.active {
   background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
 }
 
 /* Button styles */
 .btn-primary {
-  background: var(--color-accent);
-  color: white;
+  background: white;
+  color: var(--color-accent);
   font-weight: 600;
   padding: 14px 32px;
   border-radius: 14px;
@@ -134,9 +141,14 @@ body {
   box-shadow: var(--shadow-sm);
 }
 
+.dark .btn-primary {
+  background: var(--color-accent);
+  color: white;
+}
+
 .btn-primary:hover {
-  background: var(--color-accent-hover);
   transform: scale(1.02);
+  opacity: 0.95;
 }
 
 .btn-primary:active {
@@ -153,14 +165,15 @@ body {
 }
 
 .btn-secondary:hover {
-  background: var(--color-bg-tertiary);
   opacity: 0.8;
 }
 
 /* Card styles */
 .card {
-  background: var(--color-bg-primary);
-  border-radius: 20px;
+  background: var(--color-surface-elevated);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-radius: 24px;
   padding: 24px;
   box-shadow: var(--shadow-sm);
   transition: box-shadow var(--transition-fast);
@@ -168,10 +181,6 @@ body {
 
 .card:hover {
   box-shadow: var(--shadow-md);
-}
-
-.dark .card {
-  background: var(--color-bg-secondary);
 }
 
 /* Focus ring */

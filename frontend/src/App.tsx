@@ -195,10 +195,7 @@ function AppContent() {
   }
 
   return (
-    <div 
-      className="min-h-screen transition-colors duration-300"
-      style={{ background: 'var(--color-bg-secondary)' }}
-    >
+    <div className="min-h-screen transition-colors duration-300">
       {/* iOS Install Banner */}
       <IOSInstallBanner onTap={() => setShowIOSInstructions(true)} />
       
