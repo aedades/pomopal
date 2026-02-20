@@ -7,14 +7,14 @@
   /* Light mode - warm gradient palette */
   --color-bg-primary: rgba(255, 255, 255, 0.95);
   --color-bg-secondary: transparent; /* gradient applied to body */
-  --color-bg-tertiary: rgba(255, 255, 255, 0.25);
+  --color-bg-tertiary: rgba(255, 255, 255, 0.35);
   --color-text-primary: #ffffff;
-  --color-text-secondary: rgba(255, 255, 255, 0.8);
-  --color-accent: #ef4444;
-  --color-accent-hover: #dc2626;
+  --color-text-secondary: rgba(255, 255, 255, 0.9);
+  --color-accent: #dc2626;
+  --color-accent-hover: #b91c1c;
   --color-success: #22c55e;
-  --color-surface: rgba(255, 255, 255, 0.2);
-  --color-surface-elevated: rgba(255, 255, 255, 0.25);
+  --color-surface: rgba(255, 255, 255, 0.3);
+  --color-surface-elevated: rgba(255, 255, 255, 0.85);
   
   /* Gradient background */
   --gradient-bg: linear-gradient(to bottom right, #ef4444, #f97316);
@@ -105,7 +105,7 @@ body {
 /* Apple-style segmented control */
 .segmented-control {
   display: inline-flex;
-  background: var(--color-bg-tertiary);
+  background: rgba(255, 255, 255, 0.25);
   border-radius: 12px;
   padding: 3px;
 }
@@ -115,25 +115,33 @@ body {
   border-radius: 9px;
   font-size: 13px;
   font-weight: 500;
-  color: var(--color-text-secondary);
+  color: rgba(255, 255, 255, 0.85);
   transition: all var(--transition-fast);
 }
 
 .segmented-control button.active {
   background: white;
-  color: var(--color-accent);
+  color: #dc2626;
   box-shadow: var(--shadow-sm);
 }
 
+.dark .segmented-control {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.dark .segmented-control button {
+  color: rgba(255, 255, 255, 0.7);
+}
+
 .dark .segmented-control button.active {
-  background: var(--color-bg-tertiary);
-  color: var(--color-text-primary);
+  background: rgba(255, 255, 255, 0.15);
+  color: #f3f4f6;
 }
 
 /* Button styles */
 .btn-primary {
   background: white;
-  color: var(--color-accent);
+  color: #dc2626;
   font-weight: 600;
   padding: 14px 32px;
   border-radius: 14px;
@@ -142,7 +150,7 @@ body {
 }
 
 .dark .btn-primary {
-  background: var(--color-accent);
+  background: #ef4444;
   color: white;
 }
 
@@ -156,12 +164,17 @@ body {
 }
 
 .btn-secondary {
-  background: var(--color-bg-tertiary);
-  color: var(--color-text-primary);
+  background: rgba(0, 0, 0, 0.1);
+  color: #1f2937;
   font-weight: 500;
   padding: 14px 24px;
   border-radius: 14px;
   transition: all var(--transition-fast);
+}
+
+.dark .btn-secondary {
+  background: rgba(255, 255, 255, 0.15);
+  color: #f3f4f6;
 }
 
 .btn-secondary:hover {
@@ -177,10 +190,20 @@ body {
   padding: 24px;
   box-shadow: var(--shadow-sm);
   transition: box-shadow var(--transition-fast);
+  /* Dark text on light cards for legibility */
+  --color-text-primary: #1f2937;
+  --color-text-secondary: #4b5563;
+  --color-bg-tertiary: rgba(0, 0, 0, 0.08);
 }
 
 .card:hover {
   box-shadow: var(--shadow-md);
+}
+
+.dark .card {
+  --color-text-primary: #f3f4f6;
+  --color-text-secondary: #9ca3af;
+  --color-bg-tertiary: rgba(255, 255, 255, 0.1);
 }
 
 /* Focus ring */
