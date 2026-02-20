@@ -13,8 +13,8 @@
   --color-accent: #ffffff;
   --color-accent-hover: rgba(255, 255, 255, 0.9);
   --color-success: #22c55e;
-  --color-surface: rgba(255, 180, 150, 0.4);
-  --color-surface-elevated: rgba(255, 180, 150, 0.45);
+  --color-surface: rgba(200, 100, 80, 0.35);
+  --color-surface-elevated: rgba(180, 80, 60, 0.4);
   
   /* Gradient background */
   --gradient-bg: linear-gradient(to bottom right, #ef4444, #f97316);
