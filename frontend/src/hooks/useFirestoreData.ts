@@ -207,11 +207,14 @@ export function useFirestoreData(userId: string | null) {
     const now = new Date()
     const newPomodoro: GuestPomodoro = {
       id: generateId(),
-      taskId,
       durationMinutes,
       startedAt: (startedAt || now).toISOString(),
       completedAt: now.toISOString(),
       interrupted,
+    }
+    // Only include taskId if defined (Firestore rejects undefined values)
+    if (taskId) {
+      newPomodoro.taskId = taskId
     }
 
     try {
