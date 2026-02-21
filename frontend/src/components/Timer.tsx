@@ -181,22 +181,18 @@ export default function Timer({
       </div>
 
       {/* Controls */}
-      <div className="flex justify-center gap-4">
+      <div className="flex justify-center gap-3">
         <button
           onClick={onToggle}
-          className={isOverTarget && isRunning ? '' : 'btn-primary'}
+          className="btn-primary !px-6 !py-3"
           style={isOverTarget && isRunning ? {
             background: 'var(--color-success)',
             color: 'white',
-            fontWeight: 600,
-            padding: '14px 32px',
-            borderRadius: '14px',
-            transition: 'all 150ms ease',
           } : undefined}
         >
           {getButtonText()}
         </button>
-        <button onClick={onReset} className="btn-secondary">
+        <button onClick={onReset} className="btn-secondary !px-5 !py-3">
           Reset
         </button>
       </div>
