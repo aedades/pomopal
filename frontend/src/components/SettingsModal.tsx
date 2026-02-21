@@ -19,7 +19,6 @@ function NumberInput({ id, value, onChange, defaultValue, min = 1, max = 99, cla
 }) {
   const [localValue, setLocalValue] = useState(String(value))
   
-  // Validate and sync on blur
   const handleBlur = () => {
     const num = parseInt(localValue)
     if (isNaN(num) || num < min) {
@@ -42,7 +41,12 @@ function NumberInput({ id, value, onChange, defaultValue, min = 1, max = 99, cla
       value={localValue}
       onChange={(e) => setLocalValue(e.target.value)}
       onBlur={handleBlur}
-      className={className || "w-20 px-3 py-2 border rounded-lg text-center dark:bg-gray-700 dark:border-gray-600 dark:text-white"}
+      className={className || "w-20 px-3 py-2 rounded-lg text-center transition-colors"}
+      style={{
+        background: 'var(--color-bg-tertiary)',
+        color: 'var(--color-text-primary)',
+        border: 'none',
+      }}
     />
   )
 }
@@ -58,15 +62,25 @@ function HelpTip({ text }: { text: string }) {
         onClick={() => setShow(!show)}
         onMouseEnter={() => setShow(true)}
         onMouseLeave={() => setShow(false)}
-        className="w-4 h-4 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400 text-xs inline-flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-500"
+        className="w-4 h-4 rounded-full text-xs inline-flex items-center justify-center transition-colors"
+        style={{
+          background: 'var(--color-bg-tertiary)',
+          color: 'var(--color-text-secondary)',
+        }}
         aria-label="Help"
       >
         ?
       </button>
       {show && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 max-w-56 w-max p-2 text-xs text-white bg-gray-800 dark:bg-gray-900 rounded-lg shadow-lg z-10 whitespace-normal">
+        <div 
+          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 max-w-56 w-max p-2.5 text-xs rounded-xl shadow-lg z-10 whitespace-normal"
+          style={{
+            background: 'var(--color-bg-secondary)',
+            color: 'var(--color-text-primary)',
+            boxShadow: 'var(--shadow-lg)',
+          }}
+        >
           {text}
-          <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-800 dark:border-t-gray-900" />
         </div>
       )}
     </span>
@@ -75,27 +89,47 @@ function HelpTip({ text }: { text: string }) {
 
 export default function SettingsModal({ settings, onUpdate, onClose }: SettingsModalProps) {
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ background: 'rgba(0,0,0,0.4)' }}>
+      <div 
+        className="glass-elevated rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto animate-fade-in-up"
+        style={{ background: 'var(--color-bg-primary)' }}
+      >
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-gray-800 dark:text-white">Settings</h2>
+          <h2 
+            className="text-xl font-semibold"
+            style={{ color: 'var(--color-text-primary)' }}
+          >
+            Settings
+          </h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-[var(--color-bg-tertiary)]"
+            style={{ color: 'var(--color-text-secondary)' }}
           >
-            ✕
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
 
         <div className="space-y-6">
           {/* Timer Durations */}
           <section>
-            <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase mb-3">
+            <h3 
+              className="text-xs font-semibold uppercase tracking-wider mb-3"
+              style={{ color: 'var(--color-text-secondary)' }}
+            >
               Timer
             </h3>
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label htmlFor="work-duration" className="text-sm text-gray-600 dark:text-gray-400">Work</label>
+                <label 
+                  htmlFor="work-duration" 
+                  className="text-sm mb-1 block"
+                  style={{ color: 'var(--color-text-secondary)' }}
+                >
+                  Work
+                </label>
                 <NumberInput
                   id="work-duration"
                   value={settings.work_duration_minutes}
@@ -103,11 +137,17 @@ export default function SettingsModal({ settings, onUpdate, onClose }: SettingsM
                   defaultValue={25}
                   min={1}
                   max={60}
-                  className="w-full mt-1 px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="w-full mt-1 px-3 py-2.5 rounded-lg text-center transition-colors"
                 />
               </div>
               <div>
-                <label htmlFor="short-break-duration" className="text-sm text-gray-600 dark:text-gray-400">Short Break</label>
+                <label 
+                  htmlFor="short-break-duration" 
+                  className="text-sm mb-1 block"
+                  style={{ color: 'var(--color-text-secondary)' }}
+                >
+                  Short Break
+                </label>
                 <NumberInput
                   id="short-break-duration"
                   value={settings.short_break_minutes}
@@ -115,11 +155,17 @@ export default function SettingsModal({ settings, onUpdate, onClose }: SettingsM
                   defaultValue={5}
                   min={1}
                   max={30}
-                  className="w-full mt-1 px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="w-full mt-1 px-3 py-2.5 rounded-lg text-center transition-colors"
                 />
               </div>
               <div>
-                <label htmlFor="long-break-duration" className="text-sm text-gray-600 dark:text-gray-400">Long Break</label>
+                <label 
+                  htmlFor="long-break-duration" 
+                  className="text-sm mb-1 block"
+                  style={{ color: 'var(--color-text-secondary)' }}
+                >
+                  Long Break
+                </label>
                 <NumberInput
                   id="long-break-duration"
                   value={settings.long_break_minutes}
@@ -127,7 +173,7 @@ export default function SettingsModal({ settings, onUpdate, onClose }: SettingsM
                   defaultValue={15}
                   min={1}
                   max={60}
-                  className="w-full mt-1 px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="w-full mt-1 px-3 py-2.5 rounded-lg text-center transition-colors"
                 />
               </div>
             </div>
@@ -135,7 +181,10 @@ export default function SettingsModal({ settings, onUpdate, onClose }: SettingsM
 
           {/* Goals */}
           <section>
-            <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase mb-3">
+            <h3 
+              className="text-xs font-semibold uppercase tracking-wider mb-3"
+              style={{ color: 'var(--color-text-secondary)' }}
+            >
               Goals
             </h3>
             <div className="space-y-3">
@@ -146,7 +195,11 @@ export default function SettingsModal({ settings, onUpdate, onClose }: SettingsM
               />
               {settings.daily_goal_enabled && (
                 <div className="flex items-center justify-between pl-4">
-                  <label htmlFor="daily-goal" className="text-gray-600 dark:text-gray-400 text-sm">
+                  <label 
+                    htmlFor="daily-goal" 
+                    className="text-sm"
+                    style={{ color: 'var(--color-text-secondary)' }}
+                  >
                     Target
                   </label>
                   <NumberInput
@@ -167,7 +220,10 @@ export default function SettingsModal({ settings, onUpdate, onClose }: SettingsM
 
           {/* Behavior */}
           <section>
-            <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase mb-3">
+            <h3 
+              className="text-xs font-semibold uppercase tracking-wider mb-3"
+              style={{ color: 'var(--color-text-secondary)' }}
+            >
               Behavior
             </h3>
             <div className="space-y-3">
@@ -207,8 +263,11 @@ export default function SettingsModal({ settings, onUpdate, onClose }: SettingsM
 
           {/* Flow Mode */}
           <section>
-            <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase mb-3">
-              Flow Mode ⏱
+            <h3 
+              className="text-xs font-semibold uppercase tracking-wider mb-3"
+              style={{ color: 'var(--color-text-secondary)' }}
+            >
+              Flow Mode
             </h3>
             <div className="space-y-3">
               <Toggle
@@ -217,7 +276,10 @@ export default function SettingsModal({ settings, onUpdate, onClose }: SettingsM
                 onChange={(v) => onUpdate({ flow_mode_enabled: v })}
                 help="Timer counts up with no alerts. Stop anytime after target to complete."
               />
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p 
+                className="text-sm leading-relaxed"
+                style={{ color: 'var(--color-text-secondary)' }}
+              >
                 Timer counts up from 0. No alerts — work uninterrupted. 
                 Stop anytime after {settings.work_duration_minutes} min to complete a pomodoro.
               </p>
@@ -227,7 +289,7 @@ export default function SettingsModal({ settings, onUpdate, onClose }: SettingsM
           {/* Long break interval */}
           <section>
             <div className="flex items-center justify-between">
-              <label className="text-gray-700 dark:text-gray-300">
+              <label style={{ color: 'var(--color-text-primary)' }}>
                 Long break after
               </label>
               <div className="flex items-center gap-2">
@@ -237,9 +299,9 @@ export default function SettingsModal({ settings, onUpdate, onClose }: SettingsM
                   defaultValue={4}
                   min={2}
                   max={10}
-                  className="w-16 px-3 py-2 border rounded-lg text-center dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="w-16 px-3 py-2 rounded-lg text-center transition-colors"
                 />
-                <span className="text-gray-600 dark:text-gray-400">pomodoros</span>
+                <span style={{ color: 'var(--color-text-secondary)' }}>pomodoros</span>
               </div>
             </div>
           </section>
@@ -247,7 +309,7 @@ export default function SettingsModal({ settings, onUpdate, onClose }: SettingsM
 
         <button
           onClick={onClose}
-          className="w-full mt-6 px-4 py-3 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors"
+          className="btn-primary w-full mt-6"
         >
           Done
         </button>
@@ -269,20 +331,23 @@ function Toggle({
 }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-gray-700 dark:text-gray-300">
+      <span style={{ color: 'var(--color-text-primary)' }}>
         {label}
         {help && <HelpTip text={help} />}
       </span>
       <button
         onClick={() => onChange(!checked)}
-        className={`w-12 h-6 rounded-full transition-colors ${
-          checked ? 'bg-red-500' : 'bg-gray-300 dark:bg-gray-600'
-        }`}
+        className="w-12 h-7 rounded-full transition-all duration-200"
+        style={{
+          background: checked ? 'var(--color-accent)' : 'var(--color-bg-tertiary)',
+        }}
       >
         <div
-          className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${
-            checked ? 'translate-x-6' : 'translate-x-0.5'
-          }`}
+          className="w-5 h-5 rounded-full shadow transition-transform duration-200"
+          style={{
+            background: 'white',
+            transform: checked ? 'translateX(26px)' : 'translateX(2px)',
+          }}
         />
       </button>
     </div>

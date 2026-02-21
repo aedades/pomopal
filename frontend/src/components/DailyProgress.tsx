@@ -1,6 +1,6 @@
 interface DailyProgressProps {
   current: number
-  goal: number | null // null means no goal set
+  goal: number | null
 }
 
 export default function DailyProgress({ current, goal }: DailyProgressProps) {
@@ -9,29 +9,43 @@ export default function DailyProgress({ current, goal }: DailyProgressProps) {
   const isComplete = hasGoal && current >= goal
 
   return (
-    <div className="bg-white/20 dark:bg-gray-800/50 backdrop-blur-sm rounded-2xl p-4">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-white dark:text-gray-200 font-medium">
+    <div className="card animate-fade-in-up">
+      <div className="flex items-center justify-between mb-3">
+        <span 
+          className="text-sm font-medium"
+          style={{ color: 'var(--color-text-primary)' }}
+        >
           Today's Progress
         </span>
-        <span className="text-white dark:text-gray-200">
-          {hasGoal ? `${current} / ${goal} 🍅` : `${current} 🍅`}
+        <span 
+          className="text-sm font-semibold tabular-nums"
+          style={{ color: isComplete ? 'var(--color-success)' : 'var(--color-text-primary)' }}
+        >
+          {hasGoal ? `${current} / ${goal}` : current}
+          <span className="ml-1">🍅</span>
         </span>
       </div>
+      
       {hasGoal && (
-        <div className="h-3 bg-white/20 dark:bg-gray-700 rounded-full overflow-hidden">
+        <div 
+          className="h-2 rounded-full overflow-hidden"
+          style={{ background: 'var(--color-bg-tertiary)' }}
+        >
           <div
-            className={`h-full transition-all duration-500 rounded-full ${
-              isComplete
-                ? 'bg-green-400'
-                : 'bg-white dark:bg-red-400'
-            }`}
-            style={{ width: `${percentage}%` }}
+            className="h-full rounded-full transition-all duration-500 ease-out"
+            style={{ 
+              width: `${percentage}%`,
+              background: isComplete ? 'var(--color-success)' : 'var(--color-accent)',
+            }}
           />
         </div>
       )}
+      
       {isComplete && (
-        <p className="text-center text-white dark:text-green-400 text-sm mt-2">
+        <p 
+          className="text-center text-sm font-medium mt-3"
+          style={{ color: 'var(--color-success)' }}
+        >
           🎉 Daily goal reached!
         </p>
       )}

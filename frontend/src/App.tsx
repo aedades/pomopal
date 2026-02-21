@@ -62,7 +62,6 @@ function AppContent() {
   useEffect(() => {
     const hasSeenInstructions = localStorage.getItem('ios-instructions-seen')
     if (!hasSeenInstructions) {
-      // Small delay to let the app render first
       const timer = setTimeout(() => setShowIOSInstructions(true), 1000)
       return () => clearTimeout(timer)
     }
@@ -81,7 +80,6 @@ function AppContent() {
   const handleTimerStateChange = useCallback((state: TimerState) => {
     if (!isSyncEnabled) return
     
-    // Only sync if state actually changed (debounce)
     const stateKey = JSON.stringify({
       isRunning: state.isRunning,
       mode: state.mode,
@@ -103,17 +101,14 @@ function AppContent() {
   useEffect(() => {
     if (!remoteState || !isSyncEnabled) return
     
-    // Only apply once on initial load, or when remote state differs significantly
     const remoteKey = JSON.stringify({
       isRunning: remoteState.isRunning,
       mode: remoteState.mode,
       sessionCount: remoteState.sessionCount,
     })
     
-    // Skip if we just synced this state ourselves
     if (remoteKey === lastSyncedStateRef.current) return
     
-    // Apply remote state if it differs
     if (!appliedRemoteRef.current || 
         remoteState.isRunning !== timer.isRunning ||
         remoteState.mode !== timer.mode) {
@@ -129,13 +124,11 @@ function AppContent() {
     const isNowRunning = timer.isRunning
 
     if (!wasRunning && isNowRunning && !timer.isFlowMode) {
-      // Timer just started (non-flow mode) - schedule notification
       const durationMs = timer.timeLeft * 1000
       const notificationType = timer.mode === 'work' ? 'focus' : 
         timer.mode === 'shortBreak' ? 'shortBreak' : 'longBreak'
       scheduleNotification(durationMs, notificationType)
     } else if (wasRunning && !isNowRunning) {
-      // Timer just stopped - cancel any scheduled notification
       cancelNotification()
     }
 
@@ -160,8 +153,7 @@ function AppContent() {
           break
         case 'KeyN':
           e.preventDefault()
-          setView('timer') // Switch to timer view if on stats
-          // Focus the new task input
+          setView('timer')
           setTimeout(() => {
             const input = document.getElementById('new-task-input')
             input?.focus()
@@ -197,14 +189,13 @@ function AppContent() {
   const handleIOSDismiss = () => {
     setShowIOSInstructions(false)
     localStorage.setItem('ios-instructions-seen', 'true')
-    // If PWA and needs permission, request it
     if (permission === 'default') {
       requestPermission()
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-500 to-orange-400 dark:from-gray-900 dark:to-gray-800 transition-colors">
+    <div className="min-h-screen transition-colors duration-300">
       {/* iOS Install Banner */}
       <IOSInstallBanner onTap={() => setShowIOSInstructions(true)} />
       
@@ -222,28 +213,20 @@ function AppContent() {
           onUpdateSettings={updateSettings}
         />
 
-        {/* View Toggle */}
-        <div className="flex justify-center mb-4">
-          <div className="bg-white/20 dark:bg-gray-800/50 backdrop-blur-sm rounded-full p-1 flex">
+        {/* View Toggle - Apple segmented control */}
+        <div className="flex justify-center mb-6">
+          <div className="segmented-control">
             <button
               onClick={() => setView('timer')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                view === 'timer'
-                  ? 'bg-white dark:bg-gray-700 text-red-500 dark:text-red-400 shadow'
-                  : 'text-white/80 dark:text-gray-400 hover:text-white dark:hover:text-gray-200'
-              }`}
+              className={view === 'timer' ? 'active' : ''}
             >
-              🍅 Timer
+              Timer
             </button>
             <button
               onClick={() => setView('stats')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                view === 'stats'
-                  ? 'bg-white dark:bg-gray-700 text-red-500 dark:text-red-400 shadow'
-                  : 'text-white/80 dark:text-gray-400 hover:text-white dark:hover:text-gray-200'
-              }`}
+              className={view === 'stats' ? 'active' : ''}
             >
-              📊 Stats
+              Statistics
             </button>
           </div>
         </div>
@@ -279,39 +262,74 @@ function AppContent() {
           )}
         </main>
 
-        <footer className="text-center mt-8 text-white/60 dark:text-gray-500 text-sm space-y-2">
-          <p className="flex flex-wrap justify-center gap-x-3 gap-y-1">
-            <span><kbd className="px-1.5 py-0.5 bg-white/20 rounded">Space</kbd> start/pause</span>
-            <span><kbd className="px-1.5 py-0.5 bg-white/20 rounded">S</kbd> skip</span>
-            <span><kbd className="px-1.5 py-0.5 bg-white/20 rounded">N</kbd> new task</span>
+        {/* Footer */}
+        <footer className="text-center mt-12 space-y-4">
+          {/* Keyboard shortcuts */}
+          <div className="flex flex-wrap justify-center gap-4 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+            <span className="flex items-center gap-1.5">
+              <kbd 
+                className="px-2 py-1 rounded-md text-xs font-medium"
+                style={{ background: 'var(--color-bg-tertiary)', color: 'var(--color-text-secondary)' }}
+              >
+                Space
+              </kbd>
+              start/pause
+            </span>
+            <span className="flex items-center gap-1.5">
+              <kbd 
+                className="px-2 py-1 rounded-md text-xs font-medium"
+                style={{ background: 'var(--color-bg-tertiary)', color: 'var(--color-text-secondary)' }}
+              >
+                S
+              </kbd>
+              skip
+            </span>
+            <span className="flex items-center gap-1.5">
+              <kbd 
+                className="px-2 py-1 rounded-md text-xs font-medium"
+                style={{ background: 'var(--color-bg-tertiary)', color: 'var(--color-text-secondary)' }}
+              >
+                N
+              </kbd>
+              new task
+            </span>
+          </div>
+          
+          {/* Sync status */}
+          <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+            {isCloudSync ? '☁️ Synced to cloud' : '💾 Saved locally'}
           </p>
-          <p className="text-white/50">
-            {isCloudSync ? '☁️ Synced to cloud' : '📦 Data saved locally in your browser'}
-          </p>
-          <p className="text-white/50">
-            Made with ❤️ ~{' '}
+          
+          {/* Support link */}
+          <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
             <a
               href="https://buymeacoffee.com/aedades"
               target="_blank"
               rel="noopener noreferrer"
-              className="underline hover:text-white dark:hover:text-gray-300 transition-colors"
+              className="hover:underline transition-colors"
+              style={{ color: 'var(--color-text-secondary)' }}
             >
               Support this project ☕
             </a>
           </p>
-          <p className="text-white/50 dark:text-gray-500 mt-3">
-            Working with a remote team? Try{' '}
+          
+          {/* Timezone Buddy promo */}
+          <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+            Working remotely?{' '}
             <a
               href="https://aedades.github.io/timezone-buddy/"
               target="_blank"
               rel="noopener noreferrer"
-              className="underline hover:text-white dark:hover:text-gray-300 transition-colors"
+              className="hover:underline"
+              style={{ color: 'var(--color-accent)' }}
             >
               Timezone Buddy
             </a>
             {' '}🌍
           </p>
-          <p className="text-white/40 dark:text-gray-600 text-xs mt-2">
+          
+          {/* Version */}
+          <p className="text-xs opacity-50" style={{ color: 'var(--color-text-secondary)' }}>
             v{VERSION}
           </p>
         </footer>

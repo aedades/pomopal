@@ -43,20 +43,20 @@ describe('Header', () => {
   it('renders app title', () => {
     render(<Header settings={defaultSettings} onUpdateSettings={vi.fn()} />)
 
-    // Check for heading containing app name (don't hardcode exact emoji placement)
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('pomo pal')
+    // Check for heading containing app name
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Pomodoro')
   })
 
   it('shows sign-in button when user is not authenticated', () => {
     render(<Header settings={defaultSettings} onUpdateSettings={vi.fn()} />)
 
-    expect(screen.getByTitle('Sign in with Google to sync across devices')).toBeInTheDocument()
+    expect(screen.getByTitle('Sign in to sync across devices')).toBeInTheDocument()
   })
 
   it('calls signInWithGoogle when sign-in button is clicked', () => {
     render(<Header settings={defaultSettings} onUpdateSettings={vi.fn()} />)
 
-    fireEvent.click(screen.getByTitle('Sign in with Google to sync across devices'))
+    fireEvent.click(screen.getByTitle('Sign in to sync across devices'))
 
     expect(mockSignInWithGoogle).toHaveBeenCalledTimes(1)
   })
@@ -65,22 +65,24 @@ describe('Header', () => {
     const onUpdateSettings = vi.fn()
     render(<Header settings={defaultSettings} onUpdateSettings={onUpdateSettings} />)
 
-    fireEvent.click(screen.getByTitle('Toggle dark mode'))
+    fireEvent.click(screen.getByTitle('Dark mode'))
 
     expect(onUpdateSettings).toHaveBeenCalledWith({ dark_mode: true })
   })
 
-  it('shows moon emoji when dark mode is off', () => {
+  it('shows moon icon when dark mode is off', () => {
     render(<Header settings={defaultSettings} onUpdateSettings={vi.fn()} />)
 
-    expect(screen.getByTitle('Toggle dark mode')).toHaveTextContent('🌙')
+    // Now uses SVG icons instead of emoji
+    expect(screen.getByTitle('Dark mode')).toBeInTheDocument()
   })
 
-  it('shows sun emoji when dark mode is on', () => {
+  it('shows sun icon when dark mode is on', () => {
     const darkSettings = { ...defaultSettings, dark_mode: true }
     render(<Header settings={darkSettings} onUpdateSettings={vi.fn()} />)
 
-    expect(screen.getByTitle('Toggle dark mode')).toHaveTextContent('☀️')
+    // Now uses SVG icons instead of emoji
+    expect(screen.getByTitle('Light mode')).toBeInTheDocument()
   })
 
   it('opens settings modal when settings button is clicked', () => {
@@ -95,7 +97,7 @@ describe('Header', () => {
   it('opens help modal when help button is clicked', () => {
     render(<Header settings={defaultSettings} onUpdateSettings={vi.fn()} />)
 
-    fireEvent.click(screen.getByTitle('Help & Guide'))
+    fireEvent.click(screen.getByTitle('Help'))
 
     // Help modal should appear (has "How to Use" in heading)
     expect(screen.getByRole('heading', { name: /How to Use/i })).toBeInTheDocument()
@@ -141,8 +143,8 @@ describe('Header with authenticated user', () => {
     const { default: HeaderComponent } = await import('./Header')
     render(<HeaderComponent settings={defaultSettings} onUpdateSettings={vi.fn()} />)
 
-    // Should show user name (on desktop) or user icon
-    expect(screen.getByText('Test User')).toBeInTheDocument()
+    // Should show avatar with initial 'T' for Test User
+    expect(screen.getByText('T')).toBeInTheDocument()
   })
 
   it('shows dropdown menu when user button is clicked', async () => {
@@ -164,12 +166,13 @@ describe('Header with authenticated user', () => {
     const { default: HeaderComponent } = await import('./Header')
     render(<HeaderComponent settings={defaultSettings} onUpdateSettings={vi.fn()} />)
 
-    // Click user button to open dropdown
-    fireEvent.click(screen.getByText('Test User'))
+    // Click user avatar to open dropdown
+    fireEvent.click(screen.getByText('T'))
 
-    // Dropdown should show email and sign out button
+    // Dropdown should show name, email and sign out button
+    expect(screen.getByText('Test User')).toBeInTheDocument()
     expect(screen.getByText('test@example.com')).toBeInTheDocument()
-    expect(screen.getByText('Sign out')).toBeInTheDocument()
+    expect(screen.getByText('Sign Out')).toBeInTheDocument()
   })
 
   it('calls signOut when sign out button is clicked', async () => {
@@ -192,11 +195,11 @@ describe('Header with authenticated user', () => {
     const { default: HeaderComponent } = await import('./Header')
     render(<HeaderComponent settings={defaultSettings} onUpdateSettings={vi.fn()} />)
 
-    // Open dropdown
-    fireEvent.click(screen.getByText('Test User'))
+    // Open dropdown by clicking avatar
+    fireEvent.click(screen.getByText('T'))
     
     // Click sign out
-    fireEvent.click(screen.getByText('Sign out'))
+    fireEvent.click(screen.getByText('Sign Out'))
 
     expect(localSignOut).toHaveBeenCalledTimes(1)
   })
