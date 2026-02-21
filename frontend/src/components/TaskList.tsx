@@ -255,7 +255,7 @@ export default function TaskList() {
         />
         <button
           onClick={handleAddTask}
-          className="btn-primary px-5 py-3"
+          className="btn-primary px-4 py-3 shrink-0"
         >
           Add
         </button>
