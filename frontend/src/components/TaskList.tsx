@@ -246,7 +246,7 @@ export default function TaskList() {
               ? `Add task to ${projects.find(p => p.id === selectedProject)?.name}...` 
               : "Add a task..."
           }
-          className="flex-1 px-4 py-3 rounded-xl transition-all"
+          className="flex-1 px-4 py-3 rounded-xl transition-all placeholder:text-white/60"
           style={{ 
             background: 'var(--color-bg-tertiary)', 
             color: 'var(--color-text-primary)',
