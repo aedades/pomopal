@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0](https://github.com/aedades/pomopal/compare/v1.3.0...v1.4.0) (2026-02-21)
+
+
+### Features
+
+* Apple-inspired design refresh ([#43](https://github.com/aedades/pomopal/issues/43)) ([df0917d](https://github.com/aedades/pomopal/commit/df0917d879fb659e2b2c2a78a8ab8e7b17971236))
+
+
+### Bug Fixes
+
+* exclude undefined taskId from Firestore pomodoro document ([#40](https://github.com/aedades/pomopal/issues/40)) ([626dd6b](https://github.com/aedades/pomopal/commit/626dd6be8d4184179d86cd2987e32d0fac85d17f))
+* use onBlur validation for all number inputs in settings ([#42](https://github.com/aedades/pomopal/issues/42)) ([5976e96](https://github.com/aedades/pomopal/commit/5976e9664a5d7401208bd76feeaf8eb906d37a2b))
+
 ## [1.3.0](https://github.com/aedades/pomopal/compare/v1.2.0...v1.3.0) (2026-02-14)
 
 
