@@ -107,8 +107,8 @@ export default function Header({ settings, onUpdateSettings }: HeaderProps) {
       {/* Logo */}
       <div className="flex items-center gap-3">
         <div 
-          className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl"
-          style={{ background: 'var(--color-accent)' }}
+          className="w-10 h-10 rounded-full flex items-center justify-center text-xl"
+          style={{ background: 'rgba(255, 255, 255, 0.25)' }}
         >
           🍅
         </div>
